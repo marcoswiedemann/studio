@@ -17,7 +17,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { CalendarIcon } from "lucide-react";
+import { CalendarIcon, Users, Phone } from "lucide-react";
 import { Calendar } from "@/components/ui/calendar";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
@@ -34,6 +34,8 @@ const appointmentFormSchema = z.object({
   assignedTo: z.string().min(1, "Responsável é obrigatório."),
   location: z.string().optional(),
   notes: z.string().optional(),
+  contactPerson: z.string().optional(),
+  participants: z.string().optional(),
 });
 
 export type AppointmentFormValues = z.infer<typeof appointmentFormSchema>;
@@ -54,16 +56,17 @@ export function AppointmentForm({ onSubmit, initialData, onCancel, isLoading }: 
     resolver: zodResolver(appointmentFormSchema),
     defaultValues: {
       title: initialData?.title || "",
-      date: initialData?.date ? new Date(initialData.date) : new Date(),
+      date: initialData?.date ? new Date(initialData.date + 'T00:00:00') : new Date(), // Ensure correct date parsing
       time: initialData?.time || "09:00",
       assignedTo: defaultAssignedTo,
       location: initialData?.location || "",
       notes: initialData?.notes || "",
+      contactPerson: initialData?.contactPerson || "",
+      participants: initialData?.participants || "",
     },
   });
   
   const availableUsers = user?.role === USER_ROLES.ADMIN ? allUsers : allUsers.filter(u => u.id === user?.id);
-
 
   const handleSubmit = (values: AppointmentFormValues) => {
     onSubmit(values);
@@ -116,7 +119,7 @@ export function AppointmentForm({ onSubmit, initialData, onCancel, isLoading }: 
                       mode="single"
                       selected={field.value}
                       onSelect={field.onChange}
-                      disabled={(date) => date < new Date(new Date().setDate(new Date().getDate() -1))} // Disable past dates except today
+                      disabled={(date) => date < new Date(new Date().setDate(new Date().getDate() -1))} 
                       initialFocus
                     />
                   </PopoverContent>
@@ -175,6 +178,32 @@ export function AppointmentForm({ onSubmit, initialData, onCancel, isLoading }: 
               <FormLabel>Local (Opcional)</FormLabel>
               <FormControl>
                 <Input placeholder="Ex: Sala de reuniões A" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="contactPerson"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel className="flex items-center"><Phone className="h-4 w-4 mr-2 text-muted-foreground" /> Contato (Opcional)</FormLabel>
+              <FormControl>
+                <Input placeholder="Ex: Nome - (XX) XXXX-XXXX ou email@example.com" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="participants"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel className="flex items-center"><Users className="h-4 w-4 mr-2 text-muted-foreground" /> Participantes (Opcional)</FormLabel>
+              <FormControl>
+                <Textarea placeholder="Liste os participantes, separados por vírgula ou um por linha." {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>

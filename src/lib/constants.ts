@@ -1,4 +1,5 @@
-import type { User, Credentials } from '@/types';
+
+import type { User, Credentials, Appointment } from '@/types'; // Added Appointment type
 
 export const USER_ROLES = {
   ADMIN: 'Admin',
@@ -26,6 +27,8 @@ export const INITIAL_APPOINTMENTS: Omit<Appointment, 'id' | 'createdAt'>[] = [
     assignedTo: 'user-prefeito',
     location: 'Gabinete do Prefeito',
     notes: 'Discutir metas da semana.',
+    contactPerson: 'Secretária Ana - (XX) XXXX-XXXX',
+    participants: 'Prefeito, Chefe de Gabinete',
   },
   {
     title: 'Alinhamento com Secretariado',
@@ -34,6 +37,8 @@ export const INITIAL_APPOINTMENTS: Omit<Appointment, 'id' | 'createdAt'>[] = [
     assignedTo: 'user-prefeito',
     location: 'Sala de Reuniões Principal',
     notes: 'Revisar progresso dos projetos.',
+    contactPerson: 'Chefe de Gabinete - (XX) YYYY-YYYY',
+    participants: 'Prefeito, Todos os Secretários',
   },
   {
     title: 'Visita à Obra Pública X',
@@ -42,6 +47,8 @@ export const INITIAL_APPOINTMENTS: Omit<Appointment, 'id' | 'createdAt'>[] = [
     assignedTo: 'user-vice',
     location: 'Local da Obra X',
     notes: 'Acompanhar andamento.',
+    contactPerson: 'Engenheiro Responsável - (XX) ZZZZ-ZZZZ',
+    participants: 'Vice-Prefeito, Secretário de Obras',
   },
   {
     title: 'Reunião Orçamentária',
@@ -50,5 +57,7 @@ export const INITIAL_APPOINTMENTS: Omit<Appointment, 'id' | 'createdAt'>[] = [
     assignedTo: 'user-admin',
     location: 'Sala da Administração',
     notes: 'Definir prioridades orçamentárias.',
+    contactPerson: 'Diretor Financeiro',
+    participants: 'Admin, Diretor Financeiro, Contador',
   },
 ];

@@ -18,6 +18,8 @@ export interface Appointment {
   assignedTo: string; // User ID
   location?: string;
   notes?: string;
+  contactPerson?: string; // Added
+  participants?: string; // Added
   createdAt: string; // ISO string
 }
 

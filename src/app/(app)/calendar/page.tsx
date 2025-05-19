@@ -17,7 +17,7 @@ import { useAuth } from "@/contexts/auth-context";
 import { useAppointments } from "@/contexts/appointment-context";
 import type { Appointment } from "@/types";
 import { PlusCircle, ChevronLeft, ChevronRight, CalendarDays } from "lucide-react";
-import { format, parseISO, addDays, subDays, addMonths, subMonths, startOfMonth, endOfMonth, startOfWeek, endOfWeek } from "date-fns";
+import { format, parseISO, addDays, subDays, addMonths, subMonths, startOfMonth, endOfMonth, startOfWeek, endOfWeek, isSameDay as dateFnsIsSameDay } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useToast } from "@/hooks/use-toast";
 import {
@@ -48,12 +48,12 @@ export default function CalendarPage() {
   const displayedAppointments = useMemo(() => {
     if (!user) return [];
     return getAppointmentsForUser(user.id, user.role, selectedDate, viewMode);
-  }, [user, selectedDate, viewMode, getAppointmentsForUser, appointments]); // Add appointments to dependency array
+  }, [user, selectedDate, viewMode, getAppointmentsForUser, appointments]); 
 
   const handleDateSelect = (date: Date | undefined) => {
     if (date) {
       setSelectedDate(date);
-      setViewMode("day"); // Switch to day view when a date is selected from calendar
+      setViewMode("day"); 
     }
   };
 
@@ -62,15 +62,15 @@ export default function CalendarPage() {
     setIsLoading(true);
     const appointmentData = {
       ...values,
-      date: format(values.date, "yyyy-MM-dd"), // Ensure date is string
+      date: format(values.date, "yyyy-MM-dd"), 
     };
 
     try {
       if (editingAppointment) {
-        updateAppointment(editingAppointment.id, appointmentData);
+        await updateAppointment(editingAppointment.id, appointmentData); // Assuming update is async
         toast({ title: "Sucesso!", description: "Compromisso atualizado." });
       } else {
-        addAppointment(appointmentData);
+        await addAppointment(appointmentData); // Assuming add is async
         toast({ title: "Sucesso!", description: "Compromisso criado." });
       }
       setIsFormOpen(false);
@@ -95,7 +95,7 @@ export default function CalendarPage() {
     if (!appointmentToDelete) return;
     setIsLoading(true);
     try {
-      deleteAppointment(appointmentToDelete);
+      await deleteAppointment(appointmentToDelete); // Assuming delete is async
       toast({ title: "Sucesso!", description: "Compromisso excluído." });
       setAppointmentToDelete(null);
     } catch (error) {
@@ -110,7 +110,7 @@ export default function CalendarPage() {
       setSelectedDate(prev => direction === 'prev' ? subDays(prev, 1) : addDays(prev, 1));
     } else if (viewMode === 'week') {
       setSelectedDate(prev => direction === 'prev' ? subDays(prev, 7) : addDays(prev, 7));
-    } else { // month
+    } else { 
       setSelectedDate(prev => direction === 'prev' ? subMonths(prev, 1) : addMonths(prev, 1));
     }
   };
@@ -118,23 +118,25 @@ export default function CalendarPage() {
   const getTitleForView = () => {
     if (viewMode === 'day') return format(selectedDate, "PPP", { locale: ptBR });
     if (viewMode === 'week') {
-      const start = startOfWeek(selectedDate, { weekStartsOn: 1 });
+      const start = startOfWeek(selectedDate, { weekStartsOn: 1 }); // Assuming week starts on Monday
       const end = endOfWeek(selectedDate, { weekStartsOn: 1 });
       return `Semana de ${format(start, "d MMM", { locale: ptBR })} - ${format(end, "d MMM yyyy", { locale: ptBR })}`;
     }
     return format(selectedDate, "MMMM yyyy", { locale: ptBR });
   };
-
+  
   const appointmentsOnSelectedMonth = useMemo(() => {
     if (!user) return [];
-    // Get all appointments for the current user/role
-    const allUserAppointments = getAppointmentsForUser(user.id, user.role, new Date(), 'month'); // Using 'month' type to get all
-    // Filter them by the month of `selectedDate`
+    const allUserAppointments = appointments.filter(appt => {
+        if (user.role === 'Admin') return true;
+        return appt.assignedTo === user.id;
+    });
+    
     return allUserAppointments.filter(appt => {
       const apptDate = parseISO(appt.date);
       return apptDate.getMonth() === selectedDate.getMonth() && apptDate.getFullYear() === selectedDate.getFullYear();
     });
-  }, [user, selectedDate, getAppointmentsForUser, appointments]);
+  }, [user, selectedDate, appointments]);
 
 
   return (
@@ -170,23 +172,22 @@ export default function CalendarPage() {
             className="rounded-md border shadow-md bg-card p-0"
             locale={ptBR}
             modifiers={{
-              appointments: appointmentsOnSelectedMonth.map(appt => parseISO(appt.date))
+              // For react-day-picker, parseISO might not be needed if dates are already Date objects
+              // However, our Appointment type has date as string, so parseISO is correct here.
+              appointments: appointmentsOnSelectedMonth.map(appt => parseISO(appt.date)) 
             }}
             modifiersStyles={{
               appointments: {
                 fontWeight: 'bold',
-                textDecoration: 'underline',
-                textDecorationColor: 'var(--tw-prose-links)', // Or your accent color variable
-                color: 'var(--tw-prose-links)', // Or your accent color variable
+                textDecorationColor: 'var(--primary)',
+                color: 'var(--primary)',
               }
             }}
             components={{
               DayContent: ({ date, displayMonth }) => {
                 const isSelectedMonth = date.getMonth() === displayMonth.getMonth();
                 const hasAppointment = appointmentsOnSelectedMonth.some(appt => 
-                  parseISO(appt.date).getDate() === date.getDate() &&
-                  parseISO(appt.date).getMonth() === date.getMonth() &&
-                  parseISO(appt.date).getFullYear() === date.getFullYear()
+                  dateFnsIsSameDay(parseISO(appt.date),date)
                 );
                 return (
                   <div className="relative w-full h-full flex items-center justify-center">
@@ -220,7 +221,7 @@ export default function CalendarPage() {
           </DialogHeader>
           <AppointmentForm
             onSubmit={handleFormSubmit}
-            initialData={editingAppointment || undefined}
+            initialData={editingAppointment ? { ...editingAppointment, date: parseISO(editingAppointment.date) } : undefined}
             onCancel={() => { setIsFormOpen(false); setEditingAppointment(null); }}
             isLoading={isLoading}
           />
