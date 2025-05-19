@@ -5,6 +5,7 @@ export const USER_ROLES = {
   ADMIN: 'Admin',
   MAYOR: 'Prefeito',
   VICE_MAYOR: 'Vice-prefeito',
+  VIEWER: 'Visualizador',
 } as const;
 
 export const LOCAL_STORAGE_KEYS = {
@@ -15,8 +16,16 @@ export const LOCAL_STORAGE_KEYS = {
 
 export const DEFAULT_USERS_CREDENTIALS: Array<User & { password?: string }> = [
   { id: 'user-admin', username: 'admin', password: 'crm123', name: 'Administrador', role: USER_ROLES.ADMIN },
-  { id: 'user-prefeito', username: 'prefeito', password: 'crm123', name: 'Prefeito', role: USER_ROLES.MAYOR },
-  { id: 'user-vice', username: 'vice', password: 'crm123', name: 'Vice-Prefeito', role: USER_ROLES.VICE_MAYOR },
+  { id: 'user-prefeito', username: 'prefeito', password: 'crm123', name: 'Prefeito João Silva', role: USER_ROLES.MAYOR },
+  { id: 'user-vice', username: 'vice', password: 'crm123', name: 'Vice-Prefeita Maria Costa', role: USER_ROLES.VICE_MAYOR },
+  {
+    id: 'user-viewer',
+    username: 'viewer',
+    password: 'crm123',
+    name: 'Assessor de Gabinete',
+    role: USER_ROLES.VIEWER,
+    canViewCalendarsOf: ['user-prefeito'], // Example: can view Prefeito's calendar
+  },
 ];
 
 export const INITIAL_APPOINTMENTS: Omit<Appointment, 'id' | 'createdAt'>[] = [
@@ -54,7 +63,7 @@ export const INITIAL_APPOINTMENTS: Omit<Appointment, 'id' | 'createdAt'>[] = [
     title: 'Reunião Orçamentária',
     date: new Date(new Date().setDate(new Date().getDate() + 1)).toISOString().split('T')[0],
     time: '11:00',
-    assignedTo: 'user-admin',
+    assignedTo: 'user-admin', // Admin can also have appointments
     location: 'Sala da Administração',
     notes: 'Definir prioridades orçamentárias.',
     contactPerson: 'Diretor Financeiro',

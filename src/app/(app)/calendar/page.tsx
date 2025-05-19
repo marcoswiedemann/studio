@@ -16,8 +16,8 @@ import { AppointmentList } from "@/components/calendar/appointment-list";
 import { useAuth } from "@/contexts/auth-context";
 import { useAppointments } from "@/contexts/appointment-context";
 import type { Appointment } from "@/types";
-import { PlusCircle, ChevronLeft, ChevronRight, CalendarDays } from "lucide-react";
-import { format, parseISO, addDays, subDays, addMonths, subMonths, startOfMonth, endOfMonth, startOfWeek, endOfWeek, isSameDay as dateFnsIsSameDay } from "date-fns";
+import { PlusCircle, ChevronLeft, ChevronRight } from "lucide-react";
+import { format, parseISO, addDays, subDays, addMonths, subMonths, startOfWeek, endOfWeek, isSameDay as dateFnsIsSameDay } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useToast } from "@/hooks/use-toast";
 import {
@@ -30,6 +30,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { USER_ROLES } from "@/lib/constants";
 
 type ViewMode = "day" | "week" | "month";
 
@@ -45,9 +46,11 @@ export default function CalendarPage() {
   const [appointmentToDelete, setAppointmentToDelete] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
+  const isViewerRole = user?.role === USER_ROLES.VIEWER;
+
   const displayedAppointments = useMemo(() => {
     if (!user) return [];
-    return getAppointmentsForUser(user.id, user.role, selectedDate, viewMode);
+    return getAppointmentsForUser(user.id, user.role, user.canViewCalendarsOf || [], selectedDate, viewMode);
   }, [user, selectedDate, viewMode, getAppointmentsForUser, appointments]); 
 
   const handleDateSelect = (date: Date | undefined) => {
@@ -58,7 +61,7 @@ export default function CalendarPage() {
   };
 
   const handleFormSubmit = async (values: AppointmentFormValues) => {
-    if (!user) return;
+    if (!user || isViewerRole) return;
     setIsLoading(true);
     const appointmentData = {
       ...values,
@@ -67,10 +70,10 @@ export default function CalendarPage() {
 
     try {
       if (editingAppointment) {
-        await updateAppointment(editingAppointment.id, appointmentData); // Assuming update is async
+        await updateAppointment(editingAppointment.id, appointmentData);
         toast({ title: "Sucesso!", description: "Compromisso atualizado." });
       } else {
-        await addAppointment(appointmentData); // Assuming add is async
+        await addAppointment(appointmentData);
         toast({ title: "Sucesso!", description: "Compromisso criado." });
       }
       setIsFormOpen(false);
@@ -83,19 +86,21 @@ export default function CalendarPage() {
   };
 
   const openEditForm = (appointment: Appointment) => {
+    if (isViewerRole) return;
     setEditingAppointment(appointment);
     setIsFormOpen(true);
   };
 
   const openDeleteConfirm = (appointmentId: string) => {
+    if (isViewerRole) return;
     setAppointmentToDelete(appointmentId);
   };
 
   const handleDeleteConfirm = async () => {
-    if (!appointmentToDelete) return;
+    if (!appointmentToDelete || isViewerRole) return;
     setIsLoading(true);
     try {
-      await deleteAppointment(appointmentToDelete); // Assuming delete is async
+      await deleteAppointment(appointmentToDelete);
       toast({ title: "Sucesso!", description: "Compromisso excluído." });
       setAppointmentToDelete(null);
     } catch (error) {
@@ -118,7 +123,7 @@ export default function CalendarPage() {
   const getTitleForView = () => {
     if (viewMode === 'day') return format(selectedDate, "PPP", { locale: ptBR });
     if (viewMode === 'week') {
-      const start = startOfWeek(selectedDate, { weekStartsOn: 1 }); // Assuming week starts on Monday
+      const start = startOfWeek(selectedDate, { weekStartsOn: 1 });
       const end = endOfWeek(selectedDate, { weekStartsOn: 1 });
       return `Semana de ${format(start, "d MMM", { locale: ptBR })} - ${format(end, "d MMM yyyy", { locale: ptBR })}`;
     }
@@ -127,12 +132,19 @@ export default function CalendarPage() {
   
   const appointmentsOnSelectedMonth = useMemo(() => {
     if (!user) return [];
-    const allUserAppointments = appointments.filter(appt => {
-        if (user.role === 'Admin') return true;
-        return appt.assignedTo === user.id;
-    });
+    let relevantAppointments = appointments;
+    if (user.role === USER_ROLES.MAYOR || user.role === USER_ROLES.VICE_MAYOR) {
+        relevantAppointments = appointments.filter(appt => appt.assignedTo === user.id);
+    } else if (user.role === USER_ROLES.VIEWER) {
+        if (user.canViewCalendarsOf && user.canViewCalendarsOf.length > 0) {
+            relevantAppointments = appointments.filter(appt => user.canViewCalendarsOf!.includes(appt.assignedTo));
+        } else {
+            relevantAppointments = [];
+        }
+    }
+    // Admin sees all
     
-    return allUserAppointments.filter(appt => {
+    return relevantAppointments.filter(appt => {
       const apptDate = parseISO(appt.date);
       return apptDate.getMonth() === selectedDate.getMonth() && apptDate.getFullYear() === selectedDate.getFullYear();
     });
@@ -155,13 +167,14 @@ export default function CalendarPage() {
             </Button>
           ))}
         </div>
-        <Button onClick={() => { setEditingAppointment(null); setIsFormOpen(true); }} className="flex items-center gap-2">
-          <PlusCircle className="h-5 w-5" />
-          Novo Compromisso
-        </Button>
+        {!isViewerRole && (
+          <Button onClick={() => { setEditingAppointment(null); setIsFormOpen(true); }} className="flex items-center gap-2">
+            <PlusCircle className="h-5 w-5" />
+            Novo Compromisso
+          </Button>
+        )}
       </div>
       <h2 className="text-xl font-semibold md:hidden text-center">{getTitleForView()}</h2>
-
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div className="md:col-span-1">
@@ -172,8 +185,6 @@ export default function CalendarPage() {
             className="rounded-md border shadow-md bg-card p-0"
             locale={ptBR}
             modifiers={{
-              // For react-day-picker, parseISO might not be needed if dates are already Date objects
-              // However, our Appointment type has date as string, so parseISO is correct here.
               appointments: appointmentsOnSelectedMonth.map(appt => parseISO(appt.date)) 
             }}
             modifiersStyles={{
@@ -207,43 +218,48 @@ export default function CalendarPage() {
             title={`Compromissos - ${getTitleForView()}`}
             onEdit={openEditForm}
             onDelete={openDeleteConfirm}
+            isReadOnly={isViewerRole}
           />
         </div>
       </div>
 
-      <Dialog open={isFormOpen} onOpenChange={(open) => { setIsFormOpen(open); if (!open) setEditingAppointment(null); }}>
-        <DialogContent className="sm:max-w-[425px] md:max-w-lg">
-          <DialogHeader>
-            <DialogTitle>{editingAppointment ? "Editar Compromisso" : "Novo Compromisso"}</DialogTitle>
-            <DialogDescription>
-              {editingAppointment ? "Atualize os detalhes do seu compromisso." : "Preencha os detalhes para agendar um novo compromisso."}
-            </DialogDescription>
-          </DialogHeader>
-          <AppointmentForm
-            onSubmit={handleFormSubmit}
-            initialData={editingAppointment ? { ...editingAppointment, date: parseISO(editingAppointment.date) } : undefined}
-            onCancel={() => { setIsFormOpen(false); setEditingAppointment(null); }}
-            isLoading={isLoading}
-          />
-        </DialogContent>
-      </Dialog>
+      {!isViewerRole && isFormOpen && (
+        <Dialog open={isFormOpen} onOpenChange={(open) => { setIsFormOpen(open); if (!open) setEditingAppointment(null); }}>
+          <DialogContent className="sm:max-w-[425px] md:max-w-lg">
+            <DialogHeader>
+              <DialogTitle>{editingAppointment ? "Editar Compromisso" : "Novo Compromisso"}</DialogTitle>
+              <DialogDescription>
+                {editingAppointment ? "Atualize os detalhes do seu compromisso." : "Preencha os detalhes para agendar um novo compromisso."}
+              </DialogDescription>
+            </DialogHeader>
+            <AppointmentForm
+              onSubmit={handleFormSubmit}
+              initialData={editingAppointment ? { ...editingAppointment, date: parseISO(editingAppointment.date) } : undefined}
+              onCancel={() => { setIsFormOpen(false); setEditingAppointment(null); }}
+              isLoading={isLoading}
+            />
+          </DialogContent>
+        </Dialog>
+      )}
 
-      <AlertDialog open={!!appointmentToDelete} onOpenChange={(open) => !open && setAppointmentToDelete(null)}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Confirmar Exclusão</AlertDialogTitle>
-            <AlertDialogDescription>
-              Tem certeza que deseja excluir este compromisso? Esta ação não pode ser desfeita.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel onClick={() => setAppointmentToDelete(null)} disabled={isLoading}>Cancelar</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDeleteConfirm} disabled={isLoading} className="bg-destructive hover:bg-destructive/90">
-              {isLoading ? "Excluindo..." : "Excluir"}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      {!isViewerRole && !!appointmentToDelete && (
+        <AlertDialog open={!!appointmentToDelete} onOpenChange={(open) => !open && setAppointmentToDelete(null)}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Confirmar Exclusão</AlertDialogTitle>
+              <AlertDialogDescription>
+                Tem certeza que deseja excluir este compromisso? Esta ação não pode ser desfeita.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel onClick={() => setAppointmentToDelete(null)} disabled={isLoading}>Cancelar</AlertDialogCancel>
+              <AlertDialogAction onClick={handleDeleteConfirm} disabled={isLoading} className="bg-destructive hover:bg-destructive/90">
+                {isLoading ? "Excluindo..." : "Excluir"}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      )}
     </div>
   );
 }

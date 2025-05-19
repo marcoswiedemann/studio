@@ -1,13 +1,12 @@
 
-export type UserRole = 'Admin' | 'Prefeito' | 'Vice-prefeito';
+export type UserRole = 'Admin' | 'Prefeito' | 'Vice-prefeito' | 'Visualizador';
 
 export interface User {
   id: string;
   username: string;
   name: string;
   role: UserRole;
-  // Password should not be stored in the User object in a real app
-  // For this mock, it's handled separately or implied by initial data
+  canViewCalendarsOf?: string[]; // User IDs whose calendars this user can view
 }
 
 export interface Appointment {
@@ -18,8 +17,8 @@ export interface Appointment {
   assignedTo: string; // User ID
   location?: string;
   notes?: string;
-  contactPerson?: string; // Added
-  participants?: string; // Added
+  contactPerson?: string;
+  participants?: string;
   createdAt: string; // ISO string
 }
 

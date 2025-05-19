@@ -8,23 +8,28 @@ import { Button } from "@/components/ui/button";
 import {
   Form,
   FormControl,
+  FormDescription,
   FormField,
   FormItem,
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import type { User, UserRole } from "@/types";
 import { USER_ROLES } from "@/lib/constants";
+import { useAuth } from "@/contexts/auth-context";
+import React, { useEffect } from "react";
 
 const userFormSchema = z.object({
   name: z.string().min(1, "Nome é obrigatório."),
   username: z.string().min(3, "Usuário deve ter pelo menos 3 caracteres."),
-  role: z.enum([USER_ROLES.ADMIN, USER_ROLES.MAYOR, USER_ROLES.VICE_MAYOR], {
+  role: z.enum([USER_ROLES.ADMIN, USER_ROLES.MAYOR, USER_ROLES.VICE_MAYOR, USER_ROLES.VIEWER], {
     required_error: "Função é obrigatória."
   }),
-  password: z.string().optional(), // Optional for edit, required for create if not set
+  password: z.string().optional(),
+  canViewCalendarsOf: z.array(z.string()).optional(),
 });
 
 export type UserFormValues = z.infer<typeof userFormSchema>;
@@ -37,16 +42,15 @@ interface UserFormProps {
 }
 
 export function UserForm({ onSubmit, initialData, onCancel, isLoading }: UserFormProps) {
+  const { allUsers } = useAuth();
+
   const formSchemaWithConditionalPassword = userFormSchema.refine(data => {
-    // Password is required if it's a new user (no initialData) AND password field is empty
     if (!initialData && !data.password) return false;
-    // If it's an existing user OR password field is filled, validation passes for this rule
     return true;
   }, {
     message: "Senha é obrigatória para novos usuários.",
     path: ["password"],
   });
-
 
   const form = useForm<UserFormValues>({
     resolver: zodResolver(formSchemaWithConditionalPassword),
@@ -54,13 +58,30 @@ export function UserForm({ onSubmit, initialData, onCancel, isLoading }: UserFor
       name: initialData?.name || "",
       username: initialData?.username || "",
       role: initialData?.role || USER_ROLES.VICE_MAYOR,
-      password: "", // Password field is always empty initially for security
+      password: "",
+      canViewCalendarsOf: initialData?.canViewCalendarsOf || [],
     },
   });
 
+  const watchedRole = form.watch("role");
+
+  useEffect(() => {
+    if (watchedRole !== USER_ROLES.VIEWER) {
+      form.setValue("canViewCalendarsOf", []);
+    }
+  }, [watchedRole, form.setValue]);
+
   const handleSubmit = (values: UserFormValues) => {
-    onSubmit(values, initialData?.id);
+     const finalValues = {
+      ...values,
+      canViewCalendarsOf: watchedRole === USER_ROLES.VIEWER ? values.canViewCalendarsOf : [],
+    };
+    onSubmit(finalValues, initialData?.id);
   };
+
+  const usersAvailableForViewing = allUsers.filter(
+    u => u.id !== initialData?.id && u.role !== USER_ROLES.ADMIN && u.role !== USER_ROLES.VIEWER
+  );
 
   return (
     <Form {...form}>
@@ -129,6 +150,55 @@ export function UserForm({ onSubmit, initialData, onCancel, isLoading }: UserFor
             </FormItem>
           )}
         />
+
+        {watchedRole === USER_ROLES.VIEWER && (
+          <FormItem>
+            <FormLabel>Pode visualizar agendas de:</FormLabel>
+            <FormDescription>Selecione os usuários cujas agendas este visualizador poderá acessar.</FormDescription>
+             <FormField
+                control={form.control}
+                name="canViewCalendarsOf"
+                render={() => (
+                    <div className="space-y-2 mt-2 p-3 border rounded-md max-h-48 overflow-y-auto">
+                    {usersAvailableForViewing.length === 0 && <p className="text-sm text-muted-foreground">Nenhum usuário disponível para visualização.</p>}
+                    {usersAvailableForViewing.map((u) => (
+                        <FormField
+                        key={u.id}
+                        control={form.control}
+                        name="canViewCalendarsOf"
+                        render={({ field }) => {
+                            return (
+                            <FormItem className="flex flex-row items-center space-x-3 space-y-0 py-1">
+                                <FormControl>
+                                <Checkbox
+                                    checked={field.value?.includes(u.id)}
+                                    onCheckedChange={(checked) => {
+                                    const currentSelection = field.value || [];
+                                    return checked
+                                        ? field.onChange([...currentSelection, u.id])
+                                        : field.onChange(
+                                            currentSelection.filter(
+                                            (value) => value !== u.id
+                                            )
+                                        );
+                                    }}
+                                />
+                                </FormControl>
+                                <FormLabel className="font-normal text-sm">
+                                {u.name} ({u.role})
+                                </FormLabel>
+                            </FormItem>
+                            );
+                        }}
+                        />
+                    ))}
+                    </div>
+                )}
+                />
+            <FormMessage />
+          </FormItem>
+        )}
+
         <div className="flex justify-end space-x-2 pt-4">
           {onCancel && <Button type="button" variant="outline" onClick={onCancel} disabled={isLoading}>Cancelar</Button>}
           <Button type="submit" disabled={isLoading}>

@@ -5,9 +5,10 @@ import { StatsCard } from "@/components/dashboard/stats-card";
 import { UpcomingEvents } from "@/components/dashboard/upcoming-events";
 import { useAuth } from "@/contexts/auth-context";
 import { useAppointments } from "@/contexts/appointment-context";
-import { BarChart, ListChecks, Users } from "lucide-react";
+import { BarChart, ListChecks, Users, Eye } from "lucide-react"; // Added Eye for Viewer
 import { useEffect, useState } from "react";
 import type { Appointment, User } from "@/types";
+import { USER_ROLES } from "@/lib/constants";
 
 export default function DashboardPage() {
   const { user } = useAuth();
@@ -18,13 +19,14 @@ export default function DashboardPage() {
 
   useEffect(() => {
     if (user) {
-      setWeeklyCount(getWeeklyAppointmentCount(user.id, user.role));
-      setUpcoming(getUpcomingAppointments(user.id, user.role, 5));
+      // Pass the full user object to context functions
+      setWeeklyCount(getWeeklyAppointmentCount(user)); 
+      setUpcoming(getUpcomingAppointments(user, 5));
     }
   }, [user, getWeeklyAppointmentCount, getUpcomingAppointments]);
 
   if (!user) {
-    return null; // Or a loading state, though layout should handle this
+    return null; 
   }
 
   return (
@@ -45,7 +47,7 @@ export default function DashboardPage() {
         <StatsCard
           title="Função Atual"
           value={user.role}
-          icon={Users}
+          icon={user.role === USER_ROLES.VIEWER ? Eye : Users}
           description={`Bem-vindo, ${user.name}!`}
         />
       </div>

@@ -2,7 +2,7 @@
 "use client";
 
 import type { User, Credentials } from '@/types';
-import { DEFAULT_USERS_CREDENTIALS, LOCAL_STORAGE_KEYS } from '@/lib/constants';
+import { DEFAULT_USERS_CREDENTIALS, LOCAL_STORAGE_KEYS, USER_ROLES } from '@/lib/constants';
 import { useLocalStorage } from '@/hooks/use-local-storage';
 import { useRouter } from 'next/navigation';
 import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
@@ -29,7 +29,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   );
   const [allUsers, setAllUsers] = useLocalStorage<User[]>(
     LOCAL_STORAGE_KEYS.USERS, 
-    initialAllUsers // Store users without passwords
+    initialAllUsers
   );
 
   const [loading, setLoading] = useState(true);
@@ -41,16 +41,25 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const login = useCallback(async (credentials: Credentials): Promise<boolean> => {
     setLoading(true);
-    const foundUser = DEFAULT_USERS_CREDENTIALS.find(
+    // Use DEFAULT_USERS_CREDENTIALS for authentication source of truth regarding passwords
+    const foundDefaultUser = DEFAULT_USERS_CREDENTIALS.find(
       u => u.username === credentials.username && u.password === credentials.password
     );
 
-    if (foundUser) {
-      const { password, ...userToStore } = foundUser; // Don't store password in 'user' state
+    if (foundDefaultUser) {
+      // Find the corresponding user in allUsers (which doesn't have password)
+      // to ensure we use the potentially updated user data (name, role, canViewCalendarsOf) from localStorage
+      let userToStore = allUsers.find(u => u.id === foundDefaultUser.id);
+      
+      if (!userToStore) { // Should not happen if allUsers is synced, but as a fallback
+        const { password, ...restOfFoundDefaultUser } = foundDefaultUser;
+        userToStore = restOfFoundDefaultUser;
+      }
+      
       setUser(userToStore);
-      // Ensure allUsers list is initialized/synced if empty or different
-      // This check might be more robust if initialAllUsers is used as a base for comparison
-      if (allUsers.length === 0) { // Or if the stored allUsers significantly differs from default
+      
+      // Ensure allUsers list is initialized/synced if empty.
+      if (allUsers.length === 0) {
         setAllUsers(initialAllUsers);
       }
       setLoading(false);
@@ -67,18 +76,30 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, [setUser, router]);
 
   const updateUserInContext = (updatedUser: User) => {
-    setAllUsers(prevUsers => prevUsers.map(u => u.id === updatedUser.id ? updatedUser : u));
+    setAllUsers(prevUsers => prevUsers.map(u => (u.id === updatedUser.id ? updatedUser : u)));
     if (user?.id === updatedUser.id) {
       setUser(updatedUser);
     }
+    // Also update DEFAULT_USERS_CREDENTIALS for password changes (mock only)
+     const defaultUserIndex = DEFAULT_USERS_CREDENTIALS.findIndex(u => u.id === updatedUser.id);
+     if (defaultUserIndex !== -1) {
+        // Preserve password, update other fields
+        const oldPassword = DEFAULT_USERS_CREDENTIALS[defaultUserIndex].password;
+        DEFAULT_USERS_CREDENTIALS[defaultUserIndex] = {...updatedUser, password: oldPassword};
+     }
   };
 
   const addUserInContext = (newUser: User) => {
     setAllUsers(prevUsers => [...prevUsers, newUser]);
+    // Add to mock credentials (hack for mock login, password is set in UserPage)
+    // The password will be added to DEFAULT_USERS_CREDENTIALS in UsersPage.tsx
   };
 
   const deleteUserInContext = (userId: string) => {
     setAllUsers(prevUsers => prevUsers.filter(u => u.id !== userId));
+     // Remove from mock credentials (hack for mock login)
+    const userIndex = DEFAULT_USERS_CREDENTIALS.findIndex(u => u.id === userId);
+    if (userIndex > -1) DEFAULT_USERS_CREDENTIALS.splice(userIndex, 1);
   };
 
 
@@ -96,4 +117,3 @@ export const useAuth = (): AuthContextType => {
   }
   return context;
 };
-
