@@ -41,14 +41,14 @@ export function AppSidebar() {
   return (
     <Sidebar collapsible="icon" className="border-r">
       <SidebarHeader className="p-4">
-        <Link href="/dashboard" className="flex flex-col items-center gap-1 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:gap-0">
-          <div className="group-data-[collapsible=icon]:w-8 group-data-[collapsible=icon]:h-8 w-auto h-10 relative">
+        <Link href="/dashboard" className="flex flex-col items-center text-center gap-1 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:gap-0">
+          <div className="group-data-[collapsible=icon]:w-8 group-data-[collapsible=icon]:h-8 w-[100px] h-[40px] relative mb-1">
             {themeSettings.logoLightModeUrl && (
               <Image
                 src={themeSettings.logoLightModeUrl} 
                 alt={`Logo ${themeSettings.appName} (Tema Claro)`}
                 fill
-                sizes="(max-width: 768px) 32px, 40px" 
+                sizes="(max-width: 768px) 32px, 100px" 
                 style={{ objectFit: 'contain' }}
                 priority
                 data-ai-hint="logo light"
@@ -60,7 +60,7 @@ export function AppSidebar() {
                 src={themeSettings.logoDarkModeUrl} 
                 alt={`Logo ${themeSettings.appName} (Tema Escuro)`}
                 fill
-                sizes="(max-width: 768px) 32px, 40px" 
+                sizes="(max-width: 768px) 32px, 100px" 
                 style={{ objectFit: 'contain' }}
                 priority
                 data-ai-hint="logo dark"
