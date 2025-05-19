@@ -17,7 +17,7 @@ import { useAuth } from "@/contexts/auth-context";
 import { useAppointments } from "@/contexts/appointment-context";
 import type { Appointment } from "@/types";
 import { PlusCircle, ChevronLeft, ChevronRight } from "lucide-react";
-import { format, parseISO, addDays, subDays, addMonths, subMonths, startOfWeek, endOfWeek, isSameDay as dateFnsIsSameDay } from "date-fns";
+import { format, parseISO, addDays, subDays, addMonths, subMonths, startOfWeek, endOfWeek, isSameDay as dateFnsIsSameDay, isToday as dateFnsIsToday } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useToast } from "@/hooks/use-toast";
 import {
@@ -31,6 +31,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { USER_ROLES } from "@/lib/constants";
+import { cn } from "@/lib/utils";
 
 type ViewMode = "day" | "week" | "month";
 
@@ -188,14 +189,26 @@ export default function CalendarPage() {
             components={{
               DayContent: ({ date, displayMonth }) => {
                 const isCurrentDisplayMonth = date.getMonth() === displayMonth.getMonth();
+                if (!isCurrentDisplayMonth) {
+                  return <span>{format(date, "d")}</span>;
+                }
+
                 const hasAppointment = appointmentsOnSelectedMonth.some(appt =>
-                  isCurrentDisplayMonth && dateFnsIsSameDay(parseISO(appt.date), date)
+                  dateFnsIsSameDay(parseISO(appt.date), date)
                 );
+                const isSelected = selectedDate && dateFnsIsSameDay(date, selectedDate);
+                const isToday = dateFnsIsToday(date);
+
                 return (
                   <div className="relative w-full h-full flex items-center justify-center">
                     <span>{format(date, "d")}</span>
-                    {hasAppointment && (
-                      <span className="absolute bottom-0.5 left-1/2 transform -translate-x-1/2 w-1.5 h-1.5 bg-primary rounded-full"></span>
+                    {hasAppointment && !isSelected && (
+                      <span
+                        className={cn(
+                          "absolute bottom-1 left-1/2 transform -translate-x-1/2 w-2 h-2 rounded-full",
+                          isToday ? "bg-primary-foreground" : "bg-primary"
+                        )}
+                      ></span>
                     )}
                   </div>
                 );
@@ -254,3 +267,4 @@ export default function CalendarPage() {
     </div>
   );
 }
+
