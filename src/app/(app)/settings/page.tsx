@@ -72,6 +72,41 @@ const sidebarColorKeys: Array<keyof ThemeColors> = [
   'sidebarAccent', 'sidebarAccentForeground', 'sidebarBorder', 'sidebarRing'
 ];
 
+// Helper function to generate Portuguese labels
+function getPortugueseLabel(key: string): string {
+  const translations: { [key: string]: string } = {
+    background: "Fundo",
+    foreground: "Texto Principal",
+    primary: "Primária",
+    primaryForeground: "Texto Primário",
+    accent: "Destaque",
+    accentForeground: "Texto de Destaque",
+    secondary: "Secundária",
+    secondaryForeground: "Texto Secundário",
+    muted: "Suave",
+    mutedForeground: "Texto Suave",
+    card: "Cartão (Fundo)",
+    cardForeground: "Cartão (Texto)",
+    popover: "Popover (Fundo)",
+    popoverForeground: "Popover (Texto)",
+    destructive: "Destrutiva",
+    destructiveForeground: "Texto Destrutivo",
+    border: "Borda",
+    input: "Entrada (Input)",
+    ring: "Anel (Foco)",
+    sidebarBackground: "Sidebar (Fundo)",
+    sidebarForeground: "Sidebar (Texto)",
+    sidebarPrimary: "Sidebar (Primária)",
+    sidebarPrimaryForeground: "Sidebar (Texto Primário)",
+    sidebarAccent: "Sidebar (Destaque)",
+    sidebarAccentForeground: "Sidebar (Texto de Destaque)",
+    sidebarBorder: "Sidebar (Borda)",
+    sidebarRing: "Sidebar (Anel de Foco)",
+  };
+  return translations[key] || key.charAt(0).toUpperCase() + key.slice(1).replace(/([A-Z])/g, ' $1');
+}
+
+
 export default function SettingsPage() {
   const { user, loading: authLoading } = useAuth();
   const { themeSettings, setThemeSettings, resetThemeSettings: resetContextThemeSettings } = useSettings();
@@ -105,20 +140,19 @@ export default function SettingsPage() {
   }, [user, authLoading, router, toast]);
 
   useEffect(() => {
-    // Sync form and preview when themeSettings from context change (e.g., after save/reset)
     form.reset({
       colors: themeSettings.colors,
       mainLogoUrl: themeSettings.mainLogoUrl || '',
     });
     setLogoPreview(themeSettings.mainLogoUrl || DEFAULT_MAIN_LOGO_URL);
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [themeSettings]); // form.reset is stable from react-hook-form
+  }, [themeSettings]);
 
   const onSubmit = (data: SettingsFormValues) => {
     setIsLoading(true);
     const settingsToSave: ThemeSettings = {
       colors: data.colors,
-      mainLogoUrl: data.mainLogoUrl || DEFAULT_MAIN_LOGO_URL, // Fallback to default if empty
+      mainLogoUrl: data.mainLogoUrl || DEFAULT_MAIN_LOGO_URL,
     };
     setThemeSettings(settingsToSave);
     toast({ title: "Configurações Salvas!", description: "As novas configurações foram aplicadas." });
@@ -127,10 +161,10 @@ export default function SettingsPage() {
 
   const handleReset = () => {
     setIsLoading(true);
-    resetContextThemeSettings(); // This will trigger the useEffect above to reset form and preview
+    resetContextThemeSettings();
     toast({ title: "Configurações Restauradas!", description: "As configurações padrão foram restauradas." });
     if (fileInputRef.current) {
-      fileInputRef.current.value = ""; // Clear the file input
+      fileInputRef.current.value = "";
     }
     setIsLoading(false);
   };
@@ -140,12 +174,12 @@ export default function SettingsPage() {
     if (file) {
       if (file.type !== "image/png") {
         toast({ variant: "destructive", title: "Erro de Upload", description: "Por favor, envie um arquivo PNG." });
-        if (fileInputRef.current) fileInputRef.current.value = ""; // Clear invalid file
+        if (fileInputRef.current) fileInputRef.current.value = "";
         return;
       }
-      if (file.size > 2 * 1024 * 1024) { // 2MB limit for base64
+      if (file.size > 2 * 1024 * 1024) { // 2MB limit
         toast({ variant: "destructive", title: "Erro de Upload", description: "Arquivo muito grande. Limite de 2MB." });
-        if (fileInputRef.current) fileInputRef.current.value = ""; // Clear invalid file
+        if (fileInputRef.current) fileInputRef.current.value = "";
         return;
       }
       const reader = new FileReader();
@@ -162,13 +196,13 @@ export default function SettingsPage() {
     form.setValue("mainLogoUrl", DEFAULT_MAIN_LOGO_URL, { shouldValidate: true });
     setLogoPreview(DEFAULT_MAIN_LOGO_URL);
     if (fileInputRef.current) {
-      fileInputRef.current.value = ""; // Clear the file input
+      fileInputRef.current.value = "";
     }
   };
   
   const handleClearLogo = () => {
-    form.setValue("mainLogoUrl", "", { shouldValidate: true }); // Set to empty string
-    setLogoPreview(DEFAULT_MAIN_LOGO_URL); // Preview shows default when cleared
+    form.setValue("mainLogoUrl", "", { shouldValidate: true });
+    setLogoPreview(DEFAULT_MAIN_LOGO_URL);
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
     }
@@ -227,14 +261,14 @@ export default function SettingsPage() {
               <section>
                 <h3 className="text-lg font-semibold mb-3 border-b pb-2">Cores Principais</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {mainColorKeys.map(key => renderColorInput(key, key.charAt(0).toUpperCase() + key.slice(1).replace(/([A-Z])/g, ' $1')))}
+                  {mainColorKeys.map(key => renderColorInput(key, getPortugueseLabel(key)))}
                 </div>
               </section>
 
               <section>
                 <h3 className="text-lg font-semibold mb-3 pt-4 border-b pb-2">Cores da Sidebar</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {sidebarColorKeys.map(key => renderColorInput(key, key.charAt(0).toUpperCase() + key.slice(1).replace(/([A-Z])/g, ' $1')))}
+                  {sidebarColorKeys.map(key => renderColorInput(key, getPortugueseLabel(key)))}
                 </div>
               </section>
 
@@ -262,13 +296,13 @@ export default function SettingsPage() {
                             <Trash2 className="mr-2 h-4 w-4" /> Remover Logo Atual
                         </Button>
                     </div>
-                    <FormMessage /> {/* This is for the form.setValue related to mainLogoUrl if needed elsewhere, not directly for file input errors handled by toast */}
+                    <FormMessage />
                   </FormItem>
                 
                 {logoPreview && (
                   <div className="mt-4 p-4 border rounded-md bg-muted/50 flex justify-center items-center max-w-xs min-h-[80px]">
                     <Image
-                        src={logoPreview} // Can be Data URL or remote URL
+                        src={logoPreview}
                         alt="Preview do Logo"
                         width={120}
                         height={60}
@@ -316,3 +350,5 @@ export default function SettingsPage() {
     </div>
   );
 }
+
+    
