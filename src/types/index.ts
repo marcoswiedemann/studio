@@ -1,35 +1,46 @@
 
-export type UserRole = 'Admin' | 'Prefeito' | 'Vice-prefeito' | 'Visualizador';
+// Prisma enum for UserRole will be used directly, so we can simplify this.
+// export type UserRole = 'Admin' | 'Prefeito' | 'Vice-prefeito' | 'Visualizador';
+// We will use Prisma's generated UserRole enum.
+import type { UserRole as PrismaUserRole } from '@prisma/client';
+export type UserRole = PrismaUserRole;
+
 
 export interface User {
   id: string;
   username: string;
   name: string;
+  password?: string; // For client-side forms; will not be sent from API unless explicitly needed for update
   role: UserRole;
   canViewCalendarsOf?: string[]; // User IDs whose calendars this user can view
+  createdAt?: string | Date;
+  updatedAt?: string | Date;
 }
 
 export interface Appointment {
   id: string;
   title: string;
-  date: string; // ISO string for date
+  date: string | Date; // Allow Date for form, string for storage/API
   time: string; // HH:mm format
-  assignedTo: string; // User ID
+  assignedToId: string; 
+  assignedTo?: User; // For displaying name
   location?: string;
   notes?: string;
   contactPerson?: string;
   participants?: string;
   isShared?: boolean;
-  isCompleted?: boolean; // Added for appointment status
-  createdAt: string; // ISO string for creation date
-  createdBy: string; // User ID of the creator
-  updatedAt?: string; // ISO string for last update date
-  updatedBy?: string; // User ID of the last updater
+  isCompleted?: boolean;
+  createdAt: string | Date; 
+  createdById: string; 
+  createdBy?: User; // For displaying name
+  updatedAt?: string | Date; 
+  updatedById?: string;
+  updatedBy?: User; // For displaying name
 }
 
 export interface Credentials {
   username: string;
-  password?: string; // Optional for cases where password is not needed
+  password?: string; 
 }
 
 export interface ThemeColors {
@@ -52,7 +63,6 @@ export interface ThemeColors {
   border: string;
   input: string;
   ring: string;
-  // Sidebar specific colors
   sidebarBackground: string;
   sidebarForeground: string;
   sidebarPrimary: string;
@@ -64,6 +74,8 @@ export interface ThemeColors {
 }
 
 export interface ThemeSettings {
+  id?: string; // Will come from DB
+  userId?: string; // Will come from DB
   appName: string;
   colors: ThemeColors;
   logoLightModeUrl: string; 

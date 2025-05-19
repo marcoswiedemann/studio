@@ -2,20 +2,20 @@
 "use client";
 
 import type { User, Credentials } from '@/types';
-import { DEFAULT_USERS_CREDENTIALS, LOCAL_STORAGE_KEYS, USER_ROLES } from '@/lib/constants';
+import { LOCAL_STORAGE_KEYS } from '@/lib/constants';
 import { useLocalStorage } from '@/hooks/use-local-storage';
 import { useRouter } from 'next/navigation';
-import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 
 interface AuthContextType {
   user: User | null;
   login: (credentials: Credentials) => Promise<boolean>;
   logout: () => void;
   loading: boolean;
-  allUsers: User[];
-  updateUserInContext: (updatedUser: User) => void;
-  addUserInContext: (newUser: User) => void;
-  deleteUserInContext: (userId: string) => void;
+  allUsers: User[]; // This will need to be fetched from DB later
+  updateUserInContext: (updatedUser: User) => void; // Will be refactored for API
+  addUserInContext: (newUser: User) => void; // Will be refactored for API
+  deleteUserInContext: (userId: string) => void; // Will be refactored for API
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -23,78 +23,100 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useLocalStorage<User | null>(LOCAL_STORAGE_KEYS.LOGGED_IN_USER, null);
   
-  const initialAllUsers = useMemo(() => 
-    DEFAULT_USERS_CREDENTIALS.map(({ password, ...userWithoutPassword }) => userWithoutPassword), 
-    []
-  );
-  const [allUsers, setAllUsers] = useLocalStorage<User[]>(
-    LOCAL_STORAGE_KEYS.USERS, 
-    initialAllUsers
-  );
-
+  // TODO: Fetch allUsers from the database instead of localStorage or constants
+  const [allUsers, setAllUsers] = useState<User[]>([]); 
   const [loading, setLoading] = useState(true);
   const router = useRouter();
 
   useEffect(() => {
+    // Initial load check
+    if (user) {
+      // Optionally re-validate session with backend here
+    }
     setLoading(false);
   }, [user]);
 
+  // TODO: Fetch allUsers from an API endpoint when the app loads or context initializes
+  // For now, this will be empty and needs to be populated from the DB for UserForm dropdowns etc.
+  // Example:
+  // useEffect(() => {
+  //   const fetchUsers = async () => {
+  //     try {
+  //       const response = await fetch('/api/users'); // Assuming you create this endpoint
+  //       if (response.ok) {
+  //         const data = await response.json();
+  //         setAllUsers(data.users);
+  //       }
+  //     } catch (error) {
+  //       console.error("Failed to fetch users:", error);
+  //     }
+  //   };
+  //   fetchUsers();
+  // }, []);
+
+
   const login = useCallback(async (credentials: Credentials): Promise<boolean> => {
     setLoading(true);
-    // Use DEFAULT_USERS_CREDENTIALS for authentication source of truth regarding passwords
-    const foundDefaultUser = DEFAULT_USERS_CREDENTIALS.find(
-      u => u.username === credentials.username && u.password === credentials.password
-    );
+    try {
+      const response = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(credentials),
+      });
 
-    if (foundDefaultUser) {
-      // Find the corresponding user in allUsers (which doesn't have password)
-      // to ensure we use the potentially updated user data (name, role, canViewCalendarsOf) from localStorage
-      let userToStore = allUsers.find(u => u.id === foundDefaultUser.id);
-      
-      if (!userToStore) { // Should not happen if allUsers is synced, but as a fallback
-        const { password, ...restOfFoundDefaultUser } = foundDefaultUser;
-        userToStore = restOfFoundDefaultUser;
+      const data = await response.json();
+
+      if (response.ok) {
+        setUser(data.user);
+        setLoading(false);
+        return true;
+      } else {
+        setUser(null);
+        setLoading(false);
+        // Use message from API if available, otherwise a generic one
+        throw new Error(data.message || 'Falha no login.');
       }
-      
-      setUser(userToStore);
-      
-      // Ensure allUsers list is initialized/synced if empty.
-      if (allUsers.length === 0) {
-        setAllUsers(initialAllUsers);
-      }
+    } catch (error) {
+      console.error('Login failed:', error);
+      setUser(null);
       setLoading(false);
-      return true;
+      // Rethrow or handle appropriately for toast message
+      if (error instanceof Error) {
+          throw error;
+      }
+      throw new Error('Erro de conexão ou resposta inesperada.');
     }
-    setUser(null);
-    setLoading(false);
-    return false;
-  }, [setUser, setLoading, allUsers, setAllUsers, initialAllUsers]);
+  }, [setUser, setLoading]);
 
   const logout = useCallback(() => {
     setUser(null);
+    // Optionally call an API endpoint to invalidate session/token on server
     router.push('/');
   }, [setUser, router]);
 
+  // These functions will need to be refactored to make API calls to a backend
+  // that interacts with Prisma to modify user data in the database.
+  // For now, they will only affect the local `allUsers` state if it's populated.
   const updateUserInContext = (updatedUser: User) => {
-    // Update the user in the allUsers list (persisted in localStorage)
+    // TODO: Replace with API call: PUT /api/users/{userId}
     setAllUsers(prevUsers => prevUsers.map(u => (u.id === updatedUser.id ? updatedUser : u)));
-    // If the updated user is the currently logged-in user, update their state as well
     if (user?.id === updatedUser.id) {
       setUser(updatedUser);
     }
-    // Password management is now handled directly in UsersPage.tsx for DEFAULT_USERS_CREDENTIALS
+    console.warn("updateUserInContext is using local state. Needs API integration.");
   };
 
   const addUserInContext = (newUser: User) => {
+    // TODO: Replace with API call: POST /api/users
+    // The API should handle password hashing before saving to DB
     setAllUsers(prevUsers => [...prevUsers, newUser]);
-    // Adding to DEFAULT_USERS_CREDENTIALS (including password) is handled in UsersPage.tsx
+    console.warn("addUserInContext is using local state. Needs API integration.");
   };
 
   const deleteUserInContext = (userId: string) => {
+    // TODO: Replace with API call: DELETE /api/users/{userId}
     setAllUsers(prevUsers => prevUsers.filter(u => u.id !== userId));
-     // Remove from mock credentials (hack for mock login)
-    const userIndex = DEFAULT_USERS_CREDENTIALS.findIndex(u => u.id === userId);
-    if (userIndex > -1) DEFAULT_USERS_CREDENTIALS.splice(userIndex, 1);
+    console.warn("deleteUserInContext is using local state. Needs API integration.");
   };
 
 
