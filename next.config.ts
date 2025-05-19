@@ -18,6 +18,9 @@ const nextConfig: NextConfig = {
       },
     ],
   },
+  experimental: {
+    // serverActions: true, // Uncomment if planning to use Next.js Server Actions for forms
+  },
 };
 
 export default nextConfig;
