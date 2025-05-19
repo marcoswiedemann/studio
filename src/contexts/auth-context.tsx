@@ -76,23 +76,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, [setUser, router]);
 
   const updateUserInContext = (updatedUser: User) => {
+    // Update the user in the allUsers list (persisted in localStorage)
     setAllUsers(prevUsers => prevUsers.map(u => (u.id === updatedUser.id ? updatedUser : u)));
+    // If the updated user is the currently logged-in user, update their state as well
     if (user?.id === updatedUser.id) {
       setUser(updatedUser);
     }
-    // Also update DEFAULT_USERS_CREDENTIALS for password changes (mock only)
-     const defaultUserIndex = DEFAULT_USERS_CREDENTIALS.findIndex(u => u.id === updatedUser.id);
-     if (defaultUserIndex !== -1) {
-        // Preserve password, update other fields
-        const oldPassword = DEFAULT_USERS_CREDENTIALS[defaultUserIndex].password;
-        DEFAULT_USERS_CREDENTIALS[defaultUserIndex] = {...updatedUser, password: oldPassword};
-     }
+    // Password management is now handled directly in UsersPage.tsx for DEFAULT_USERS_CREDENTIALS
   };
 
   const addUserInContext = (newUser: User) => {
     setAllUsers(prevUsers => [...prevUsers, newUser]);
-    // Add to mock credentials (hack for mock login, password is set in UserPage)
-    // The password will be added to DEFAULT_USERS_CREDENTIALS in UsersPage.tsx
+    // Adding to DEFAULT_USERS_CREDENTIALS (including password) is handled in UsersPage.tsx
   };
 
   const deleteUserInContext = (userId: string) => {

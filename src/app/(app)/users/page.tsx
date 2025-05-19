@@ -47,8 +47,8 @@ export default function UsersPage() {
       } else {
         setPageLoading(false);
       }
-    } else if (!user && !useAuth().loading) { // if no user and auth context is not loading anymore
-        router.replace("/"); // redirect to login if not authenticated
+    } else if (!user && !useAuth().loading) { 
+        router.replace("/"); 
     }
   }, [user, router, toast, useAuth().loading]);
 
@@ -86,20 +86,23 @@ export default function UsersPage() {
         const existingUser = allUsers.find(u => u.id === userIdToUpdate);
         if (!existingUser) throw new Error("Usuário não encontrado para edição.");
         
+        // Prepare user data for AuthContext (name, role, canViewCalendarsOf)
         const updatedUserData: User = {
-          ...existingUser, // Spread existing user first to retain fields like id, username
+          ...existingUser, 
           name: values.name,
           role: values.role,
-          // Explicitly set canViewCalendarsOf from form values
           canViewCalendarsOf: values.role === USER_ROLES.VIEWER ? values.canViewCalendarsOf || [] : [],
         };
+        updateUserInContext(updatedUserData); // Updates allUsers in localStorage
         
-        updateUserInContext(updatedUserData);
-        
+        // Explicitly update password in DEFAULT_USERS_CREDENTIALS if provided
         if (values.password) {
             const defaultUserIndex = DEFAULT_USERS_CREDENTIALS.findIndex(u => u.id === userIdToUpdate);
             if (defaultUserIndex !== -1) {
                 DEFAULT_USERS_CREDENTIALS[defaultUserIndex].password = values.password;
+            } else {
+                // This case should ideally not happen if users are consistent
+                console.warn("User to update password for not found in DEFAULT_USERS_CREDENTIALS");
             }
         }
         toast({ title: "Sucesso!", description: "Usuário atualizado." });
@@ -111,15 +114,21 @@ export default function UsersPage() {
             return;
         }
         const newUserId = `user-${Date.now()}`;
-        const newUser: User = {
+        // Prepare user data for AuthContext
+        const newUserForContext: User = {
           id: newUserId,
           name: values.name,
-          username: values.username,
+          username: values.username, // Username is set here
           role: values.role,
           canViewCalendarsOf: values.role === USER_ROLES.VIEWER ? values.canViewCalendarsOf || [] : [],
         };
-        addUserInContext(newUser);
-        DEFAULT_USERS_CREDENTIALS.push({ ...newUser, password: values.password });
+        addUserInContext(newUserForContext); // Adds to allUsers in localStorage
+
+        // Explicitly add new user with password to DEFAULT_USERS_CREDENTIALS
+        DEFAULT_USERS_CREDENTIALS.push({ 
+          ...newUserForContext, // Spread the user data
+          password: values.password  // Add the password
+        });
         toast({ title: "Sucesso!", description: "Usuário criado." });
       }
       setIsFormOpen(false);
@@ -135,10 +144,7 @@ export default function UsersPage() {
     if (!userToDelete) return;
     setIsLoading(true);
     try {
-      deleteUserInContext(userToDelete);
-      const userIndex = DEFAULT_USERS_CREDENTIALS.findIndex(u => u.id === userToDelete);
-      if (userIndex > -1) DEFAULT_USERS_CREDENTIALS.splice(userIndex, 1);
-
+      deleteUserInContext(userToDelete); // This already handles DEFAULT_USERS_CREDENTIALS
       toast({ title: "Sucesso!", description: "Usuário excluído." });
       setUserToDelete(null);
     } catch (error) {
