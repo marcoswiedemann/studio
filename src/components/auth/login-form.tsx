@@ -19,7 +19,7 @@ import { useAuth } from "@/contexts/auth-context";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
 import { useState } from "react";
-import { Building } from "lucide-react";
+import Image from "next/image";
 
 const formSchema = z.object({
   username: z.string().min(1, { message: "Usuário é obrigatório." }),
@@ -31,6 +31,7 @@ export function LoginForm() {
   const router = useRouter();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
+  const logoUrl = "https://pmsantoangelo.abase.com.br/site/Brasoes/120/cabecalho.png";
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -61,7 +62,14 @@ export function LoginForm() {
       <Card className="w-full max-w-md shadow-xl">
         <CardHeader className="text-center">
           <div className="flex justify-center items-center mb-4">
-            <Building className="h-12 w-12 text-primary" />
+            <Image 
+              src={logoUrl} 
+              alt="Logo Prefeitura Santo Ângelo" 
+              width={120} // Adjust width as needed
+              height={60} // Adjust height as needed
+              priority
+              data-ai-hint="logo prefeitura"
+            />
           </div>
           <CardTitle className="text-3xl font-bold">AgendaGov</CardTitle>
           <CardDescription>Sistema de Agendamento da Prefeitura</CardDescription>

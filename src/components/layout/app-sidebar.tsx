@@ -3,7 +3,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Building } from "lucide-react";
+import Image from "next/image";
 import {
   Sidebar,
   SidebarHeader,
@@ -27,6 +27,8 @@ function getInitials(name: string) {
   return initials;
 }
 
+const logoUrl = "https://pmsantoangelo.abase.com.br/site/Brasoes/120/cabecalho.png";
+
 
 export function AppSidebar() {
   const { user, logout } = useAuth();
@@ -41,8 +43,18 @@ export function AppSidebar() {
     <Sidebar collapsible="icon" className="border-r">
       <SidebarHeader className="p-4">
         <Link href="/dashboard" className="flex items-center gap-2 group-data-[collapsible=icon]:justify-center">
-          <Building className="h-8 w-8 text-primary" />
-          <span className="font-semibold text-lg text-primary group-data-[collapsible=icon]:hidden">AgendaGov</span>
+          <div className="group-data-[collapsible=icon]:w-8 group-data-[collapsible=icon]:h-8 w-auto h-10 relative">
+            <Image 
+              src={logoUrl} 
+              alt="Logo AgendaGov" 
+              fill
+              sizes="(max-width: 768px) 32px, 100px" // Adjust sizes as needed
+              style={{ objectFit: 'contain' }}
+              priority
+              data-ai-hint="logo prefeitura"
+            />
+          </div>
+          <span className="font-semibold text-lg text-primary group-data-[collapsible=icon]:hidden ml-2">AgendaGov</span>
         </Link>
       </SidebarHeader>
       <SidebarContent>

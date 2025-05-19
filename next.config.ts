@@ -16,6 +16,12 @@ const nextConfig: NextConfig = {
         port: '',
         pathname: '/**',
       },
+      {
+        protocol: 'https',
+        hostname: 'pmsantoangelo.abase.com.br',
+        port: '',
+        pathname: '/**',
+      }
     ],
   },
   experimental: {

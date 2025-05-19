@@ -7,7 +7,8 @@ import { Appointment } from "@/types";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
-import { CalendarClock, MapPin, User as UserIcon, Phone, Users as UsersIcon, Info, Building } from "lucide-react";
+import { CalendarClock, MapPin, User as UserIcon, Phone, Users as UsersIcon, Info } from "lucide-react";
+import Image from "next/image";
 import { format, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useEffect, useState } from "react";
@@ -64,6 +65,8 @@ function PublicAppointmentItem({ appointment, getUserName }: { appointment: Appo
   );
 }
 
+const logoUrl = "https://pmsantoangelo.abase.com.br/site/Brasoes/120/cabecalho.png";
+
 export default function PublicAgendaPage() {
   const { appointments } = useAppointments();
   const { allUsers, loading: authLoading } = useAuth(); // Use loading state from auth context
@@ -105,9 +108,16 @@ export default function PublicAgendaPage() {
   return (
     <div className="min-h-screen bg-background text-foreground">
       <header className="py-6 bg-card border-b border-border">
-        <div className="container mx-auto px-4 flex items-center gap-3">
-          <Building className="h-10 w-10 text-primary" />
-          <div>
+        <div className="container mx-auto px-4 flex flex-col sm:flex-row items-center gap-4">
+          <Image 
+            src={logoUrl} 
+            alt="Logo Prefeitura Santo Ângelo" 
+            width={150} // Adjust width as needed for header
+            height={75} // Adjust height as needed for header
+            priority
+            data-ai-hint="logo prefeitura"
+          />
+          <div className="text-center sm:text-left">
             <h1 className="text-3xl font-bold text-primary">Agenda Pública da Prefeitura</h1>
             <p className="text-muted-foreground">Compromissos oficiais abertos ao público.</p>
           </div>
@@ -127,7 +137,7 @@ export default function PublicAgendaPage() {
                 Nenhum compromisso público agendado no momento.
               </p>
             ) : (
-              <ScrollArea className="h-[calc(100vh-280px)] pr-3"> {/* Adjusted height */}
+              <ScrollArea className="h-[calc(100vh-320px)] pr-3"> {/* Adjusted height */}
                 <div className="space-y-4">
                   {sortedAppointments.map((appointment) => (
                     <PublicAppointmentItem 
