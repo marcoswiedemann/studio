@@ -1,10 +1,12 @@
+
 import type { Metadata } from 'next';
 import { Geist, Geist_Mono } from 'next/font/google';
 import './globals.css';
 import { Toaster } from "@/components/ui/toaster";
 import { AuthProvider } from '@/contexts/auth-context';
 import { AppointmentProvider } from '@/contexts/appointment-context';
-import { SettingsProvider } from '@/contexts/settings-context'; // Import SettingsProvider
+import { SettingsProvider } from '@/contexts/settings-context'; 
+import { DEFAULT_THEME_SETTINGS } from '@/lib/constants'; // Import default settings
 
 const geistSans = Geist({
   variable: '--font-geist-sans',
@@ -16,8 +18,9 @@ const geistMono = Geist_Mono({
   subsets: ['latin'],
 });
 
+// Static metadata as a fallback
 export const metadata: Metadata = {
-  title: 'AgendaGov',
+  title: DEFAULT_THEME_SETTINGS.appName, // Use default app name as fallback
   description: 'Sistema de Agendamento com Níveis de Acesso',
 };
 
@@ -31,7 +34,7 @@ export default function RootLayout({
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
         <AuthProvider>
           <AppointmentProvider>
-            <SettingsProvider> {/* Wrap with SettingsProvider */}
+            <SettingsProvider> 
               {children}
               <Toaster />
             </SettingsProvider>

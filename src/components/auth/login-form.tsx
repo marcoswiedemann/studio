@@ -66,29 +66,29 @@ export function LoginForm() {
             {themeSettings.logoLightModeUrl && (
               <Image
                 src={themeSettings.logoLightModeUrl} 
-                alt="Logo Prefeitura (Tema Claro)"
+                alt="Logo (Tema Claro)"
                 width={120}
                 height={60}
                 style={{ objectFit: 'contain' }} 
                 priority
-                data-ai-hint="logo prefeitura light"
+                data-ai-hint="logo light"
                 className="block dark:hidden"
               />
             )}
             {themeSettings.logoDarkModeUrl && (
               <Image
                 src={themeSettings.logoDarkModeUrl} 
-                alt="Logo Prefeitura (Tema Escuro)"
+                alt="Logo (Tema Escuro)"
                 width={120}
                 height={60}
                 style={{ objectFit: 'contain' }} 
                 priority
-                data-ai-hint="logo prefeitura dark"
+                data-ai-hint="logo dark"
                 className="hidden dark:block"
               />
             )}
           </div>
-          <CardTitle className="text-3xl font-bold">AgendaGov</CardTitle>
+          <CardTitle className="text-3xl font-bold">{themeSettings.appName}</CardTitle>
           <CardDescription>Sistema de Agendamento da Prefeitura</CardDescription>
         </CardHeader>
         <CardContent>

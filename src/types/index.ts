@@ -60,8 +60,9 @@ export interface ThemeColors {
 }
 
 export interface ThemeSettings {
+  appName: string; // Added appName
   colors: ThemeColors;
-  logoLightModeUrl: string; // For light backgrounds (typically a darker logo)
-  logoDarkModeUrl: string;  // For dark backgrounds (typically a lighter logo)
+  logoLightModeUrl: string; 
+  logoDarkModeUrl: string;  
 }
 

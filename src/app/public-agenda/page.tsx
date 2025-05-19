@@ -108,29 +108,29 @@ export default function PublicAgendaPage() {
           {themeSettings.logoLightModeUrl && (
             <Image
               src={themeSettings.logoLightModeUrl}
-              alt="Logo Prefeitura (Tema Claro)"
+              alt="Logo (Tema Claro)"
               width={150} 
               height={75}
               style={{ objectFit: 'contain' }} 
               priority
-              data-ai-hint="logo prefeitura light"
+              data-ai-hint="logo light"
               className="block dark:hidden"
             />
           )}
           {themeSettings.logoDarkModeUrl && (
              <Image
               src={themeSettings.logoDarkModeUrl}
-              alt="Logo Prefeitura (Tema Escuro)"
+              alt="Logo (Tema Escuro)"
               width={150} 
               height={75}
               style={{ objectFit: 'contain' }} 
               priority
-              data-ai-hint="logo prefeitura dark"
+              data-ai-hint="logo dark"
               className="hidden dark:block"
             />
           )}
           <div className="text-center sm:text-left">
-            <h1 className="text-3xl font-bold text-primary">Agenda Pública da Prefeitura</h1>
+            <h1 className="text-3xl font-bold text-primary">Agenda Pública da {themeSettings.appName}</h1>
             <p className="text-muted-foreground">Compromissos oficiais abertos ao público.</p>
           </div>
         </div>
@@ -165,7 +165,7 @@ export default function PublicAgendaPage() {
         </Card>
       </main>
       <footer className="py-6 text-center text-muted-foreground border-t border-border mt-8">
-        <p>&copy; {new Date().getFullYear()} Prefeitura Municipal. Todos os direitos reservados.</p>
+        <p>&copy; {new Date().getFullYear()} {themeSettings.appName}. Todos os direitos reservados.</p>
       </footer>
     </div>
   );

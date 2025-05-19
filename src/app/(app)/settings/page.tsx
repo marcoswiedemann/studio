@@ -15,7 +15,7 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from "@/components/ui/form";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Palette, Image as ImageIcon, Save, RotateCcw, Trash2 } from "lucide-react";
+import { Loader2, Palette, Image as ImageIcon, Save, RotateCcw, Trash2, CaseSensitive } from "lucide-react";
 import Image from "next/image";
 
 const hexColorSchema = z.string().regex(
@@ -54,6 +54,7 @@ const themeColorsSchema = z.object({
 });
 
 const settingsFormSchema = z.object({
+  appName: z.string().min(1, "Nome do aplicativo é obrigatório."),
   colors: themeColorsSchema,
   logoLightModeUrl: z.string().optional(), 
   logoDarkModeUrl: z.string().optional(),
@@ -121,6 +122,7 @@ export default function SettingsPage() {
   const form = useForm<SettingsFormValues>({
     resolver: zodResolver(settingsFormSchema),
     defaultValues: {
+      appName: themeSettings.appName,
       colors: themeSettings.colors,
       logoLightModeUrl: themeSettings.logoLightModeUrl || '',
       logoDarkModeUrl: themeSettings.logoDarkModeUrl || '',
@@ -145,6 +147,7 @@ export default function SettingsPage() {
 
   useEffect(() => {
     form.reset({
+      appName: themeSettings.appName,
       colors: themeSettings.colors,
       logoLightModeUrl: themeSettings.logoLightModeUrl || '',
       logoDarkModeUrl: themeSettings.logoDarkModeUrl || '',
@@ -157,6 +160,7 @@ export default function SettingsPage() {
   const onSubmit = (data: SettingsFormValues) => {
     setIsLoading(true);
     const settingsToSave: ThemeSettings = {
+      appName: data.appName,
       colors: data.colors,
       logoLightModeUrl: data.logoLightModeUrl || DEFAULT_LOGO_URL,
       logoDarkModeUrl: data.logoDarkModeUrl || DEFAULT_LOGO_URL,
@@ -168,7 +172,7 @@ export default function SettingsPage() {
 
   const handleReset = () => {
     setIsLoading(true);
-    resetContextThemeSettings(); // This will also trigger the useEffect above to reset form and previews
+    resetContextThemeSettings(); 
     if (fileInputLightRef.current) fileInputLightRef.current.value = "";
     if (fileInputDarkRef.current) fileInputDarkRef.current.value = "";
     toast({ title: "Configurações Restauradas!", description: "As configurações padrão foram restauradas." });
@@ -221,7 +225,7 @@ export default function SettingsPage() {
     const fileInputRef = logoType === 'light' ? fileInputLightRef : fileInputDarkRef;
     if (logoType === 'light') {
       form.setValue("logoLightModeUrl", "", { shouldValidate: true });
-      setLogoLightPreview(DEFAULT_LOGO_URL); // Preview shows default if current logo is cleared
+      setLogoLightPreview(DEFAULT_LOGO_URL); 
     } else {
       form.setValue("logoDarkModeUrl", "", { shouldValidate: true });
       setLogoDarkPreview(DEFAULT_LOGO_URL);
@@ -361,7 +365,7 @@ export default function SettingsPage() {
             <div>
               <CardTitle className="text-2xl">Configurações de Aparência</CardTitle>
               <CardDescription>
-                Personalize as cores (formato hexadecimal) e os logos (PNG) do sistema.
+                Personalize o nome, cores (formato hexadecimal) e os logos (PNG) do sistema.
               </CardDescription>
             </div>
           </div>
@@ -370,14 +374,32 @@ export default function SettingsPage() {
           <form onSubmit={form.handleSubmit(onSubmit)}>
             <CardContent className="space-y-6">
               <section>
+                <h3 className="text-lg font-semibold mb-3 border-b pb-2">Geral</h3>
+                 <FormField
+                  control={form.control}
+                  name="appName"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="flex items-center"><CaseSensitive className="mr-2 h-4 w-4" /> Nome do Aplicativo</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Ex: Minha Prefeitura Online" {...field} />
+                      </FormControl>
+                      <FormDescription>Este nome aparecerá no título da aba do navegador e em outras partes do sistema.</FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </section>
+
+              <section className="mt-6 pt-6 border-t">
                 <h3 className="text-lg font-semibold mb-3 border-b pb-2">Cores Principais</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                   {mainColorKeys.map(key => renderColorInput(key, getPortugueseLabel(key)))}
                 </div>
               </section>
 
-              <section>
-                <h3 className="text-lg font-semibold mb-3 pt-4 border-b pb-2">Cores da Sidebar</h3>
+              <section className="mt-6 pt-6 border-t">
+                <h3 className="text-lg font-semibold mb-3 border-b pb-2">Cores da Sidebar</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                   {sidebarColorKeys.map(key => renderColorInput(key, getPortugueseLabel(key)))}
                 </div>

@@ -58,10 +58,12 @@ function hexToHslString(hex: string): string | null {
     return `${hsl.h} ${hsl.s}% ${hsl.l}%`;
 }
 
-const applyThemeColors = (colors: ThemeColors) => {
+const applyTheme = (settings: ThemeSettings) => {
   if (typeof window === 'undefined') return;
+  
+  // Apply Colors
   const root = document.documentElement;
-  Object.entries(colors).forEach(([key, hexValue]) => {
+  Object.entries(settings.colors).forEach(([key, hexValue]) => {
     const hslString = hexToHslString(hexValue);
     if (hslString) {
       const cssVarName = `--${key.replace(/([A-Z])/g, '-$1').toLowerCase()}`;
@@ -70,6 +72,11 @@ const applyThemeColors = (colors: ThemeColors) => {
       console.warn(`Invalid hex color '${hexValue}' for theme key '${key}'. CSS variable not set.`);
     }
   });
+
+  // Apply App Name to Document Title
+  if (settings.appName) {
+    document.title = settings.appName;
+  }
 };
 
 export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -79,8 +86,8 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   );
 
   useEffect(() => {
-    applyThemeColors(themeSettings.colors);
-  }, [themeSettings.colors]);
+    applyTheme(themeSettings);
+  }, [themeSettings]);
 
   const resetThemeSettings = () => {
     setThemeSettings(DEFAULT_THEME_SETTINGS);
@@ -91,7 +98,7 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     setThemeSettings,
     resetThemeSettings,
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }), [themeSettings]); // setThemeSettings is stable from useLocalStorage
+  }), [themeSettings]); 
 
   return (
     <SettingsContext.Provider value={contextValue}>

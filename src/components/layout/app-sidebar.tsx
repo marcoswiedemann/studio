@@ -46,29 +46,29 @@ export function AppSidebar() {
             {themeSettings.logoLightModeUrl && (
               <Image
                 src={themeSettings.logoLightModeUrl} 
-                alt="Logo AgendaGov (Tema Claro)"
+                alt="Logo (Tema Claro)"
                 fill
                 sizes="(max-width: 768px) 32px, 100px" 
                 style={{ objectFit: 'contain' }}
                 priority
-                data-ai-hint="logo prefeitura light"
+                data-ai-hint="logo light"
                 className="block dark:hidden"
               />
             )}
              {themeSettings.logoDarkModeUrl && (
               <Image
                 src={themeSettings.logoDarkModeUrl} 
-                alt="Logo AgendaGov (Tema Escuro)"
+                alt="Logo (Tema Escuro)"
                 fill
                 sizes="(max-width: 768px) 32px, 100px" 
                 style={{ objectFit: 'contain' }}
                 priority
-                data-ai-hint="logo prefeitura dark"
+                data-ai-hint="logo dark"
                 className="hidden dark:block"
               />
             )}
           </div>
-          <span className="font-semibold text-lg text-primary group-data-[collapsible=icon]:hidden ml-2">AgendaGov</span>
+          <span className="font-semibold text-lg text-primary group-data-[collapsible=icon]:hidden ml-2">{themeSettings.appName}</span>
         </Link>
       </SidebarHeader>
       <SidebarContent>

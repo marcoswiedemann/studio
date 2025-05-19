@@ -1,5 +1,5 @@
 
-import type { User, Credentials, Appointment, ThemeSettings } from '@/types'; // Added Appointment type & ThemeSettings
+import type { User, Credentials, Appointment, ThemeSettings } from '@/types'; 
 
 export const USER_ROLES = {
   ADMIN: 'Admin',
@@ -18,6 +18,7 @@ export const LOCAL_STORAGE_KEYS = {
 export const DEFAULT_LOGO_URL = "https://pmsantoangelo.abase.com.br/site/Brasoes/120/cabecalho.png";
 
 export const DEFAULT_THEME_SETTINGS: ThemeSettings = {
+  appName: 'AgendaGov', // Added default appName
   colors: {
     background: "#ECEFF1", 
     foreground: "#383A3D", 
@@ -48,7 +49,7 @@ export const DEFAULT_THEME_SETTINGS: ThemeSettings = {
     sidebarRing: "#3F51B5",             
   },
   logoLightModeUrl: DEFAULT_LOGO_URL,
-  logoDarkModeUrl: DEFAULT_LOGO_URL, // Default to same logo, admin can change
+  logoDarkModeUrl: DEFAULT_LOGO_URL,
 };
 
 
@@ -62,7 +63,7 @@ export const DEFAULT_USERS_CREDENTIALS: Array<User & { password?: string }> = [
     password: 'crm123',
     name: 'Assessor de Gabinete',
     role: USER_ROLES.VIEWER,
-    canViewCalendarsOf: ['user-prefeito'], // Example: can view Prefeito's calendar
+    canViewCalendarsOf: ['user-prefeito'], 
   },
 ];
 
@@ -123,4 +124,3 @@ export const INITIAL_APPOINTMENTS: Omit<Appointment, 'id' | 'createdAt'>[] = [
     isShared: false,
   }
 ];
-

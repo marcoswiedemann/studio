@@ -8,6 +8,7 @@ import Link from "next/link";
 import { navItems } from "@/config/site";
 import { usePathname } from "next/navigation";
 import { useAuth } from "@/contexts/auth-context";
+import { useSettings } from "@/contexts/settings-context";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   DropdownMenu,
@@ -30,10 +31,11 @@ function getInitials(name: string) {
 
 export function AppHeader() {
   const { user, logout } = useAuth();
+  const { themeSettings } = useSettings();
   const pathname = usePathname();
-  const { toggleSidebar, isMobile } = useSidebar(); // Get toggleSidebar from shadcn sidebar context
+  const { toggleSidebar, isMobile } = useSidebar(); 
 
-  const pageTitle = navItems.find(item => pathname.startsWith(item.href))?.title || "AgendaGov";
+  const pageTitle = navItems.find(item => pathname.startsWith(item.href))?.title || themeSettings.appName;
 
   const filteredNavItems = navItems.filter(item => {
     if (!item.roles) return true;
