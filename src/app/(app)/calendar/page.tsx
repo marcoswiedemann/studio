@@ -53,6 +53,13 @@ export default function CalendarPage() {
     return getAppointmentsForUser(user.id, user.role, user.canViewCalendarsOf || [], selectedDate, viewMode);
   }, [user, selectedDate, viewMode, getAppointmentsForUser]);
 
+  const appointmentsOnSelectedMonth = useMemo(() => {
+    if (!user) return [];
+    // Get all appointments for the month of the selectedDate
+    return getAppointmentsForUser(user.id, user.role, user.canViewCalendarsOf || [], selectedDate, 'month');
+  }, [user, selectedDate, getAppointmentsForUser]);
+
+
   const handleDateSelect = (date: Date | undefined) => {
     if (date) {
       setSelectedDate(date);
@@ -67,6 +74,7 @@ export default function CalendarPage() {
       ...values,
       date: format(values.date, "yyyy-MM-dd"),
       isShared: values.isShared || false,
+      isCompleted: values.isCompleted || false,
     };
 
     try {
@@ -88,7 +96,7 @@ export default function CalendarPage() {
 
   const openEditForm = (appointment: Appointment) => {
     if (isViewerRole) return;
-    setEditingAppointment(appointment);
+    setEditingAppointment({ ...appointment, date: parseISO(appointment.date) });
     setIsFormOpen(true);
   };
 
@@ -117,24 +125,23 @@ export default function CalendarPage() {
     } else if (viewMode === 'week') {
       setSelectedDate(prev => direction === 'prev' ? subDays(prev, 7) : addDays(prev, 7));
     } else {
-      setSelectedDate(prev => direction === 'prev' ? subMonths(prev, 1) : addMonths(prev, 1));
+      // When in month view, navigating should change the month for the calendar highlight as well
+      setSelectedDate(prev => {
+        const newDate = direction === 'prev' ? subMonths(prev, 1) : addMonths(prev, 1);
+        return newDate;
+      });
     }
   };
 
   const getTitleForView = () => {
     if (viewMode === 'day') return format(selectedDate, "PPP", { locale: ptBR });
     if (viewMode === 'week') {
-      const start = startOfWeek(selectedDate, { weekStartsOn: 1 });
+      const start = startOfWeek(selectedDate, { weekStartsOn: 1 }); // Assuming week starts on Monday for ptBR
       const end = endOfWeek(selectedDate, { weekStartsOn: 1 });
       return `Semana de ${format(start, "d MMM", { locale: ptBR })} - ${format(end, "d MMM yyyy", { locale: ptBR })}`;
     }
     return format(selectedDate, "MMMM yyyy", { locale: ptBR });
   };
-
-  const appointmentsOnSelectedMonth = useMemo(() => {
-    if (!user) return [];
-    return getAppointmentsForUser(user.id, user.role, user.canViewCalendarsOf || [], selectedDate, 'month');
-  }, [user, selectedDate, getAppointmentsForUser]);
 
 
   return (
@@ -170,24 +177,24 @@ export default function CalendarPage() {
             onSelect={handleDateSelect}
             className="rounded-md border shadow-md bg-card p-0"
             locale={ptBR}
+            month={selectedDate} // Control the displayed month
+            onMonthChange={setSelectedDate} // Update selectedDate when month changes in calendar
             modifiers={{
-              appointments: appointmentsOnSelectedMonth.map(appt => parseISO(appt.date))
+              // We'll use DayContent for custom rendering of appointment indicators
             }}
             modifiersStyles={{
-              appointments: {
-                fontWeight: 'bold',
-              }
+              // Custom styles for modifiers if needed
             }}
             components={{
               DayContent: ({ date, displayMonth }) => {
-                const isSelectedMonth = date.getMonth() === displayMonth.getMonth();
+                const isCurrentDisplayMonth = date.getMonth() === displayMonth.getMonth();
                 const hasAppointment = appointmentsOnSelectedMonth.some(appt =>
-                  dateFnsIsSameDay(parseISO(appt.date),date)
+                  isCurrentDisplayMonth && dateFnsIsSameDay(parseISO(appt.date), date)
                 );
                 return (
                   <div className="relative w-full h-full flex items-center justify-center">
                     <span>{format(date, "d")}</span>
-                    {isSelectedMonth && hasAppointment && (
+                    {hasAppointment && (
                       <span className="absolute bottom-0.5 left-1/2 transform -translate-x-1/2 w-1.5 h-1.5 bg-primary rounded-full"></span>
                     )}
                   </div>
@@ -218,7 +225,7 @@ export default function CalendarPage() {
             </DialogHeader>
             <AppointmentForm
               onSubmit={handleFormSubmit}
-              initialData={editingAppointment ? { ...editingAppointment, date: parseISO(editingAppointment.date) } : undefined}
+              initialData={editingAppointment || undefined}
               onCancel={() => { setIsFormOpen(false); setEditingAppointment(null); }}
               isLoading={isLoading}
             />
