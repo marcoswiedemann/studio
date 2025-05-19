@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -9,53 +9,53 @@ import * as z from "zod";
 import { useAuth } from "@/contexts/auth-context";
 import { useSettings } from "@/contexts/settings-context";
 import type { ThemeSettings, ThemeColors } from "@/types";
-import { USER_ROLES } from "@/lib/constants";
+import { USER_ROLES, DEFAULT_THEME_SETTINGS, DEFAULT_MAIN_LOGO_URL } from "@/lib/constants";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from "@/components/ui/form";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Palette, Image as ImageIcon, Save, RotateCcw } from "lucide-react";
+import { Loader2, Palette, Image as ImageIcon, Save, RotateCcw, Trash2 } from "lucide-react";
 import Image from "next/image";
 
-const hslStringSchema = z.string().regex(
-  /^\s*\d{1,3}(\s+\d{1,3}%\s+\d{1,3}%|\s*,\s*\d{1,3}%\s*,\s*\d{1,3}%)\s*$/,
-  "Formato HSL inválido. Ex: 210 40% 96% ou 210, 40%, 96%"
-).transform(val => val.trim().replace(/\s*,\s*/g, ' ')); // Normalize to space separation
+const hexColorSchema = z.string().regex(
+  /^#([0-9A-Fa-f]{6}|[0-9A-Fa-f]{3})$/,
+  "Formato hexadecimal inválido. Ex: #RRGGBB ou #RGB"
+).transform(val => val.toUpperCase());
 
 const themeColorsSchema = z.object({
-  background: hslStringSchema,
-  foreground: hslStringSchema,
-  card: hslStringSchema,
-  cardForeground: hslStringSchema,
-  popover: hslStringSchema,
-  popoverForeground: hslStringSchema,
-  primary: hslStringSchema,
-  primaryForeground: hslStringSchema,
-  secondary: hslStringSchema,
-  secondaryForeground: hslStringSchema,
-  muted: hslStringSchema,
-  mutedForeground: hslStringSchema,
-  accent: hslStringSchema,
-  accentForeground: hslStringSchema,
-  destructive: hslStringSchema,
-  destructiveForeground: hslStringSchema,
-  border: hslStringSchema,
-  input: hslStringSchema,
-  ring: hslStringSchema,
-  sidebarBackground: hslStringSchema,
-  sidebarForeground: hslStringSchema,
-  sidebarPrimary: hslStringSchema,
-  sidebarPrimaryForeground: hslStringSchema,
-  sidebarAccent: hslStringSchema,
-  sidebarAccentForeground: hslStringSchema,
-  sidebarBorder: hslStringSchema,
-  sidebarRing: hslStringSchema,
+  background: hexColorSchema,
+  foreground: hexColorSchema,
+  card: hexColorSchema,
+  cardForeground: hexColorSchema,
+  popover: hexColorSchema,
+  popoverForeground: hexColorSchema,
+  primary: hexColorSchema,
+  primaryForeground: hexColorSchema,
+  secondary: hexColorSchema,
+  secondaryForeground: hexColorSchema,
+  muted: hexColorSchema,
+  mutedForeground: hexColorSchema,
+  accent: hexColorSchema,
+  accentForeground: hexColorSchema,
+  destructive: hexColorSchema,
+  destructiveForeground: hexColorSchema,
+  border: hexColorSchema,
+  input: hexColorSchema,
+  ring: hexColorSchema,
+  sidebarBackground: hexColorSchema,
+  sidebarForeground: hexColorSchema,
+  sidebarPrimary: hexColorSchema,
+  sidebarPrimaryForeground: hexColorSchema,
+  sidebarAccent: hexColorSchema,
+  sidebarAccentForeground: hexColorSchema,
+  sidebarBorder: hexColorSchema,
+  sidebarRing: hexColorSchema,
 });
 
 const settingsFormSchema = z.object({
   colors: themeColorsSchema,
-  mainLogoUrl: z.string().url({ message: "URL do logo inválida." }).or(z.literal("").transform(() => "")),
+  mainLogoUrl: z.string().optional(), // Will store Data URI, default remote URL, or be empty
 });
 
 type SettingsFormValues = z.infer<typeof settingsFormSchema>;
@@ -74,17 +74,22 @@ const sidebarColorKeys: Array<keyof ThemeColors> = [
 
 export default function SettingsPage() {
   const { user, loading: authLoading } = useAuth();
-  const { themeSettings, setThemeSettings, resetThemeSettings } = useSettings();
+  const { themeSettings, setThemeSettings, resetThemeSettings: resetContextThemeSettings } = useSettings();
   const router = useRouter();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
   const [pageLoading, setPageLoading] = useState(true);
-  const [logoPreview, setLogoPreview] = useState(themeSettings.mainLogoUrl);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const form = useForm<SettingsFormValues>({
     resolver: zodResolver(settingsFormSchema),
-    defaultValues: themeSettings,
+    defaultValues: {
+      colors: themeSettings.colors,
+      mainLogoUrl: themeSettings.mainLogoUrl || '',
+    },
   });
+
+  const [logoPreview, setLogoPreview] = useState<string>(form.getValues("mainLogoUrl") || DEFAULT_MAIN_LOGO_URL);
 
   useEffect(() => {
     if (user) {
@@ -94,34 +99,81 @@ export default function SettingsPage() {
       } else {
         setPageLoading(false);
       }
-    } else if (!authLoading && !user) { // check !user as well
+    } else if (!authLoading && !user) {
         router.replace("/");
     }
   }, [user, authLoading, router, toast]);
 
   useEffect(() => {
-    form.reset(themeSettings);
-    setLogoPreview(themeSettings.mainLogoUrl);
-  }, [themeSettings, form]);
+    // Sync form and preview when themeSettings from context change (e.g., after save/reset)
+    form.reset({
+      colors: themeSettings.colors,
+      mainLogoUrl: themeSettings.mainLogoUrl || '',
+    });
+    setLogoPreview(themeSettings.mainLogoUrl || DEFAULT_MAIN_LOGO_URL);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [themeSettings]); // form.reset is stable from react-hook-form
 
   const onSubmit = (data: SettingsFormValues) => {
     setIsLoading(true);
-    setThemeSettings(data);
+    const settingsToSave: ThemeSettings = {
+      colors: data.colors,
+      mainLogoUrl: data.mainLogoUrl || DEFAULT_MAIN_LOGO_URL, // Fallback to default if empty
+    };
+    setThemeSettings(settingsToSave);
     toast({ title: "Configurações Salvas!", description: "As novas configurações foram aplicadas." });
     setIsLoading(false);
   };
 
   const handleReset = () => {
     setIsLoading(true);
-    resetThemeSettings();
+    resetContextThemeSettings(); // This will trigger the useEffect above to reset form and preview
     toast({ title: "Configurações Restauradas!", description: "As configurações padrão foram restauradas." });
+    if (fileInputRef.current) {
+      fileInputRef.current.value = ""; // Clear the file input
+    }
     setIsLoading(false);
   };
   
-  const currentLogoUrl = form.watch("mainLogoUrl");
-  useEffect(() => {
-    setLogoPreview(currentLogoUrl);
-  }, [currentLogoUrl]);
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      if (file.type !== "image/png") {
+        toast({ variant: "destructive", title: "Erro de Upload", description: "Por favor, envie um arquivo PNG." });
+        if (fileInputRef.current) fileInputRef.current.value = ""; // Clear invalid file
+        return;
+      }
+      if (file.size > 2 * 1024 * 1024) { // 2MB limit for base64
+        toast({ variant: "destructive", title: "Erro de Upload", description: "Arquivo muito grande. Limite de 2MB." });
+        if (fileInputRef.current) fileInputRef.current.value = ""; // Clear invalid file
+        return;
+      }
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const dataUrl = reader.result as string;
+        form.setValue("mainLogoUrl", dataUrl, { shouldValidate: true });
+        setLogoPreview(dataUrl);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleUseDefaultLogo = () => {
+    form.setValue("mainLogoUrl", DEFAULT_MAIN_LOGO_URL, { shouldValidate: true });
+    setLogoPreview(DEFAULT_MAIN_LOGO_URL);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = ""; // Clear the file input
+    }
+  };
+  
+  const handleClearLogo = () => {
+    form.setValue("mainLogoUrl", "", { shouldValidate: true }); // Set to empty string
+    setLogoPreview(DEFAULT_MAIN_LOGO_URL); // Preview shows default when cleared
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+    toast({ title: "Logo Removido", description: "O logo customizado foi removido. O sistema usará o logo padrão se nenhum novo for salvo." });
+  };
 
 
   if (pageLoading || authLoading) {
@@ -144,7 +196,10 @@ export default function SettingsPage() {
         <FormItem>
           <FormLabel>{label}</FormLabel>
           <FormControl>
-            <Input placeholder="Ex: 210 40% 96%" {...field} />
+            <div className="flex items-center gap-2">
+              <Input placeholder="Ex: #3F51B5" {...field} className="flex-grow" />
+              <div className="w-8 h-8 rounded border" style={{ backgroundColor: field.value }}></div>
+            </div>
           </FormControl>
           <FormMessage />
         </FormItem>
@@ -161,7 +216,7 @@ export default function SettingsPage() {
             <div>
               <CardTitle className="text-2xl">Configurações de Aparência</CardTitle>
               <CardDescription>
-                Personalize as cores e o logo do sistema. As cores devem ser informadas no formato HSL (Ex: 210 40% 96% ou 210, 40%, 96%).
+                Personalize as cores (formato hexadecimal, ex: #FF0000) e o logo (PNG) do sistema.
               </CardDescription>
             </div>
           </div>
@@ -185,34 +240,35 @@ export default function SettingsPage() {
 
               <section>
                 <h3 className="text-lg font-semibold mb-3 pt-4 border-b pb-2">Logo do Sistema</h3>
-                 <FormField
-                  control={form.control}
-                  name="mainLogoUrl"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="flex items-center"><ImageIcon className="mr-2 h-4 w-4" /> URL do Logo Principal</FormLabel>
-                      <FormControl>
-                        <Input 
-                          placeholder="https://example.com/logo.png" 
-                          {...field} 
-                          onChange={(e) => {
-                            field.onChange(e.target.value);
-                            setLogoPreview(e.target.value);
-                          }}
-                        />
-                      </FormControl>
-                      <FormDescription>
-                        O logo aparecerá na tela de login, sidebar e agenda pública. Certifique-se que o domínio da URL do logo está permitido nas configurações do Next.js (next.config.ts).
-                      </FormDescription>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                 <FormItem>
+                    <FormLabel className="flex items-center"><ImageIcon className="mr-2 h-4 w-4" /> Logo Principal (Arquivo PNG)</FormLabel>
+                    <FormControl>
+                      <Input 
+                        type="file"
+                        accept="image/png"
+                        ref={fileInputRef}
+                        onChange={handleFileChange}
+                        className="cursor-pointer"
+                      />
+                    </FormControl>
+                    <FormDescription>
+                      Envie um arquivo PNG para o logo. Máximo de 2MB.
+                    </FormDescription>
+                     <div className="flex gap-2 mt-2">
+                        <Button type="button" variant="outline" size="sm" onClick={handleUseDefaultLogo}>
+                            Usar Logo Padrão
+                        </Button>
+                        <Button type="button" variant="outline" size="sm" onClick={handleClearLogo} className="text-destructive hover:text-destructive border-destructive/50 hover:border-destructive">
+                            <Trash2 className="mr-2 h-4 w-4" /> Remover Logo Atual
+                        </Button>
+                    </div>
+                    <FormMessage /> {/* This is for the form.setValue related to mainLogoUrl if needed elsewhere, not directly for file input errors handled by toast */}
+                  </FormItem>
+                
                 {logoPreview && (
                   <div className="mt-4 p-4 border rounded-md bg-muted/50 flex justify-center items-center max-w-xs min-h-[80px]">
                     <Image
-                        key={logoPreview} // Add key to force re-render on URL change for preview
-                        src={logoPreview}
+                        src={logoPreview} // Can be Data URL or remote URL
                         alt="Preview do Logo"
                         width={120}
                         height={60}
@@ -221,7 +277,7 @@ export default function SettingsPage() {
                         onError={(e) => {
                             const target = e.target as HTMLImageElement;
                             target.alt = "Falha ao carregar preview do logo";
-                            target.style.display = 'none'; // Hide broken image
+                            target.style.display = 'none';
                             const parent = target.parentElement;
                             if (parent && !parent.querySelector('.logo-error-message')) {
                                 const errorMsg = document.createElement('p');

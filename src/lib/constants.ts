@@ -12,41 +12,41 @@ export const LOCAL_STORAGE_KEYS = {
   LOGGED_IN_USER: 'agendaGovUser',
   USERS: 'agendaGovUsers',
   APPOINTMENTS: 'agendaGovAppointments',
-  THEME_SETTINGS: 'agendaGovThemeSettings', // New key
+  THEME_SETTINGS: 'agendaGovThemeSettings',
 };
 
 export const DEFAULT_MAIN_LOGO_URL = "https://pmsantoangelo.abase.com.br/site/Brasoes/120/cabecalho.png";
 
 export const DEFAULT_THEME_SETTINGS: ThemeSettings = {
   colors: {
-    background: "206 23% 94%",
-    foreground: "210 10% 23%",
-    card: "0 0% 100%",
-    cardForeground: "210 10% 23%",
-    popover: "0 0% 100%",
-    popoverForeground: "210 10% 23%",
-    primary: "231 48% 48%",
-    primaryForeground: "0 0% 100%",
-    secondary: "210 16% 90%",
-    secondaryForeground: "210 10% 23%",
-    muted: "210 16% 90%",
-    mutedForeground: "210 10% 45%",
-    accent: "261 44% 70%",
-    accentForeground: "0 0% 100%",
-    destructive: "0 84.2% 60.2%",
-    destructiveForeground: "0 0% 98%",
-    border: "210 10% 85%",
-    input: "210 10% 85%",
-    ring: "231 48% 48%",
-    // Sidebar defaults from globals.css
-    sidebarBackground: "220 15% 20%",
-    sidebarForeground: "210 40% 98%",
-    sidebarPrimary: "231 48% 48%",
-    sidebarPrimaryForeground: "0 0% 100%",
-    sidebarAccent: "220 15% 28%",
-    sidebarAccentForeground: "210 40% 98%",
-    sidebarBorder: "220 15% 15%",
-    sidebarRing: "231 48% 48%",
+    background: "#ECEFF1", // hsl(206 23% 94%)
+    foreground: "#383A3D", // hsl(210 10% 23%)
+    card: "#FFFFFF",       // hsl(0 0% 100%)
+    cardForeground: "#383A3D", // hsl(210 10% 23%)
+    popover: "#FFFFFF",      // hsl(0 0% 100%)
+    popoverForeground: "#383A3D", // hsl(210 10% 23%)
+    primary: "#3F51B5",      // hsl(231 48% 48%)
+    primaryForeground: "#FFFFFF", // hsl(0 0% 100%)
+    secondary: "#E0E5E9",    // hsl(210 16% 90%)
+    secondaryForeground: "#383A3D", // hsl(210 10% 23%)
+    muted: "#E0E5E9",        // hsl(210 16% 90%)
+    mutedForeground: "#696E75", // hsl(210 10% 45%)
+    accent: "#9575CD",       // hsl(261 44% 70%)
+    accentForeground: "#FFFFFF", // hsl(0 0% 100%)
+    destructive: "#F44336",  // hsl(0 84.2% 60.2%)
+    destructiveForeground: "#FAFAFA", // hsl(0 0% 98%)
+    border: "#D3D7DB",       // hsl(210 10% 85%)
+    input: "#D3D7DB",        // hsl(210 10% 85%)
+    ring: "#3F51B5",         // hsl(231 48% 48%)
+    // Sidebar defaults (converted to hex)
+    sidebarBackground: "#2B303B",       // hsl(220 15% 20%)
+    sidebarForeground: "#F9FAFC",       // hsl(210 40% 98%)
+    sidebarPrimary: "#3F51B5",          // hsl(231 48% 48%)
+    sidebarPrimaryForeground: "#FFFFFF", // hsl(0 0% 100%)
+    sidebarAccent: "#3C4352",           // hsl(220 15% 28%)
+    sidebarAccentForeground: "#F9FAFC",  // hsl(210 40% 98%)
+    sidebarBorder: "#1F2329",           // hsl(220 15% 15%)
+    sidebarRing: "#3F51B5",             // hsl(231 48% 48%)
   },
   mainLogoUrl: DEFAULT_MAIN_LOGO_URL,
 };
