@@ -18,6 +18,7 @@ import { navItems, NavItem } from "@/config/site";
 import { useAuth } from "@/contexts/auth-context";
 import { useSettings } from "@/contexts/settings-context"; 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { DEFAULT_LOGO_URL } from "@/lib/constants"; // Importar DEFAULT_LOGO_URL para a lógica de fallback
 
 function getInitials(name: string) {
   const names = name.split(' ');
@@ -38,33 +39,29 @@ export function AppSidebar() {
     return user && item.roles.includes(user.role);
   });
 
+  // A sidebar é escura, então deve priorizar o logo para tema escuro.
+  // Se o logo para tema escuro não foi customizado (ou seja, ainda é o mesmo que o light, ou o default escuro),
+  // e o logo para tema claro for diferente e mais apropriado (improvável neste cenário de sidebar escura),
+  // ou como último recurso, o logo padrão.
+  // A intenção principal é: usar o logo que o admin definiu para fundos escuros.
+  const logoToDisplay = themeSettings.logoDarkModeUrl || themeSettings.logoLightModeUrl || DEFAULT_LOGO_URL;
+  const logoHint = (themeSettings.logoDarkModeUrl && themeSettings.logoDarkModeUrl !== DEFAULT_LOGO_URL) ? "logo dark" : "logo light";
+
+
   return (
     <Sidebar collapsible="icon" className="border-r">
       <SidebarHeader className="p-4">
         <Link href="/dashboard" className="flex flex-col items-center text-center gap-1 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:gap-0">
           <div className="group-data-[collapsible=icon]:w-8 group-data-[collapsible=icon]:h-8 w-[100px] h-[40px] relative mb-1">
-            {themeSettings.logoLightModeUrl && (
+            {logoToDisplay && (
               <Image
-                src={themeSettings.logoLightModeUrl} 
-                alt={`Logo ${themeSettings.appName} (Tema Claro)`}
+                src={logoToDisplay} 
+                alt={`Logo ${themeSettings.appName}`}
                 fill
                 sizes="(max-width: 768px) 32px, 100px" 
                 style={{ objectFit: 'contain' }}
                 priority
-                data-ai-hint="logo light"
-                className="block dark:hidden"
-              />
-            )}
-             {themeSettings.logoDarkModeUrl && (
-              <Image
-                src={themeSettings.logoDarkModeUrl} 
-                alt={`Logo ${themeSettings.appName} (Tema Escuro)`}
-                fill
-                sizes="(max-width: 768px) 32px, 100px" 
-                style={{ objectFit: 'contain' }}
-                priority
-                data-ai-hint="logo dark"
-                className="hidden dark:block"
+                data-ai-hint={logoHint}
               />
             )}
           </div>
