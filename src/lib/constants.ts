@@ -164,7 +164,7 @@ export const INITIAL_APPOINTMENTS: Omit<Appointment, 'id' | 'createdAt'>[] = [
     contactPerson: '',
     participants: '',
     isShared: false,
-    isCompleted: false,
+    isCompleted: false, // Status 'Não Realizado' maps to false
   },
   {
     title: 'MISSA NA CATEDRAL',
@@ -236,7 +236,7 @@ export const INITIAL_APPOINTMENTS: Omit<Appointment, 'id' | 'createdAt'>[] = [
     contactPerson: '',
     participants: '',
     isShared: false,
-    isCompleted: false,
+    isCompleted: false, // Status 'Não Realizado' maps to false
   },
   {
     title: 'REUNIÃO C/ADV. NICO MARCHIONATTI',
@@ -287,7 +287,7 @@ export const INITIAL_APPOINTMENTS: Omit<Appointment, 'id' | 'createdAt'>[] = [
     isCompleted: true,
   },
   {
-    title: 'REUNIÃO C/SRª LEANDRA/RH E  A SRª MARISA/SINDICATO DOS FUNCIONÁRIOS MUNICIPAIS, P/TRATAR SOBRE IPE E OUTROS ASSUNTOS DE INTERESSE DA CLASSE',
+    title: 'REUNIÃO C/SRª LEANDRA/RH E A SRª MARISA/SINDICATO DOS FUNCIONÁRIOS MUNICIPAIS, P/TRATAR SOBRE IPE E OUTROS ASSUNTOS DE INTERESSE DA CLASSE',
     date: '2025-05-05',
     time: '08:00',
     assignedTo: PREFEITO_USER_ID,
@@ -455,7 +455,7 @@ export const INITIAL_APPOINTMENTS: Omit<Appointment, 'id' | 'createdAt'>[] = [
     isCompleted: true,
   },
   {
-    title: 'REUNIÃO  COM ALCIDES SCHIRMER SOBRE TERRENO NA MARECHAL FLORIANO QUE DA ACESSO AO FLORIPA',
+    title: 'REUNIÃO COM ALCIDES SCHIRMER SOBRE TERRENO NA MARECHAL FLORIANO QUE DA ACESSO AO FLORIPA',
     date: '2025-05-13',
     time: '17:00',
     assignedTo: PREFEITO_USER_ID,
@@ -814,5 +814,5 @@ export const INITIAL_APPOINTMENTS: Omit<Appointment, 'id' | 'createdAt'>[] = [
     isShared: false,
     isCompleted: true,
   }
-
+];
     
