@@ -51,12 +51,12 @@ export default function CalendarPage() {
   const displayedAppointments = useMemo(() => {
     if (!user) return [];
     return getAppointmentsForUser(user.id, user.role, user.canViewCalendarsOf || [], selectedDate, viewMode);
-  }, [user, selectedDate, viewMode, getAppointmentsForUser, appointments]); // appointments added as dependency
+  }, [user, selectedDate, viewMode, getAppointmentsForUser]);
 
   const handleDateSelect = (date: Date | undefined) => {
     if (date) {
       setSelectedDate(date);
-      setViewMode("day"); 
+      setViewMode("day");
     }
   };
 
@@ -65,8 +65,8 @@ export default function CalendarPage() {
     setIsLoading(true);
     const appointmentData = {
       ...values,
-      date: format(values.date, "yyyy-MM-dd"), 
-      isShared: values.isShared || false, // Ensure isShared is handled
+      date: format(values.date, "yyyy-MM-dd"),
+      isShared: values.isShared || false,
     };
 
     try {
@@ -110,13 +110,13 @@ export default function CalendarPage() {
       setIsLoading(false);
     }
   };
-  
+
   const navigateDate = (direction: 'prev' | 'next') => {
     if (viewMode === 'day') {
       setSelectedDate(prev => direction === 'prev' ? subDays(prev, 1) : addDays(prev, 1));
     } else if (viewMode === 'week') {
       setSelectedDate(prev => direction === 'prev' ? subDays(prev, 7) : addDays(prev, 7));
-    } else { 
+    } else {
       setSelectedDate(prev => direction === 'prev' ? subMonths(prev, 1) : addMonths(prev, 1));
     }
   };
@@ -130,15 +130,11 @@ export default function CalendarPage() {
     }
     return format(selectedDate, "MMMM yyyy", { locale: ptBR });
   };
-  
-  // This specific filtering for appointmentsOnSelectedMonth is for the calendar day highlighting.
-  // It uses the same core logic as displayedAppointments but focuses only on the month for highlighting.
+
   const appointmentsOnSelectedMonth = useMemo(() => {
     if (!user) return [];
-    // We need all appointments potentially visible to the current user for the selected month
-    // getAppointmentsForUser with viewType 'month' will give us this.
     return getAppointmentsForUser(user.id, user.role, user.canViewCalendarsOf || [], selectedDate, 'month');
-  }, [user, selectedDate, getAppointmentsForUser, appointments]); // appointments added
+  }, [user, selectedDate, getAppointmentsForUser]);
 
 
   return (
@@ -175,8 +171,7 @@ export default function CalendarPage() {
             className="rounded-md border shadow-md bg-card p-0"
             locale={ptBR}
             modifiers={{
-              // appointments modifier will receive dates directly from appointmentsOnSelectedMonth
-              appointments: appointmentsOnSelectedMonth.map(appt => parseISO(appt.date)) 
+              appointments: appointmentsOnSelectedMonth.map(appt => parseISO(appt.date))
             }}
             modifiersStyles={{
               appointments: {
@@ -186,7 +181,7 @@ export default function CalendarPage() {
             components={{
               DayContent: ({ date, displayMonth }) => {
                 const isSelectedMonth = date.getMonth() === displayMonth.getMonth();
-                const hasAppointment = appointmentsOnSelectedMonth.some(appt => 
+                const hasAppointment = appointmentsOnSelectedMonth.some(appt =>
                   dateFnsIsSameDay(parseISO(appt.date),date)
                 );
                 return (
@@ -252,4 +247,3 @@ export default function CalendarPage() {
     </div>
   );
 }
-
