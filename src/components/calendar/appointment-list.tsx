@@ -51,7 +51,7 @@ export function AppointmentList({ appointments, title, onEdit, onDelete, isReadO
                 <div 
                   key={appointment.id} 
                   className={cn(
-                    "p-4 border rounded-lg bg-card hover:bg-muted/50 transition-colors relative group",
+                    "p-4 border rounded-lg bg-card hover:bg-muted/50 transition-all duration-150 relative group shadow-sm hover:shadow-md", // Added shadow-sm and hover:shadow-md
                     canModify(appointment) && "cursor-pointer",
                     appointment.isCompleted && "opacity-75"
                   )}
@@ -141,4 +141,3 @@ export function AppointmentList({ appointments, title, onEdit, onDelete, isReadO
     </Card>
   );
 }
-

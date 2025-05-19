@@ -4,7 +4,7 @@
 import { useAppointments } from "@/contexts/appointment-context";
 import { useAuth } from "@/contexts/auth-context"; 
 import { useSettings } from "@/contexts/settings-context"; 
-import { Appointment } from "@/types";
+import { Appointment, UserRole as AppUserRole } from "@/types"; // Renamed UserRole to avoid conflict
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
@@ -15,10 +15,11 @@ import { ptBR } from "date-fns/locale";
 import { useEffect, useState } from "react";
 import { Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { USER_ROLES } from "@/lib/constants"; // Ensure USER_ROLES is imported for comparison
 
 function PublicAppointmentItem({ appointment, getUserName }: { appointment: Appointment; getUserName: (userId: string) => string }) {
   return (
-    <div className={cn("p-4 border rounded-lg bg-card shadow-sm", appointment.isCompleted && "opacity-75")}>
+    <div className={cn("p-4 border rounded-lg bg-card shadow-sm hover:shadow-md transition-all duration-150", appointment.isCompleted && "opacity-75")}> {/* Added shadow-sm hover:shadow-md */}
       <div className="flex justify-between items-start mb-2">
         <h3 className={cn(
             "font-semibold text-lg text-primary pr-2 flex-1 break-words",
@@ -100,7 +101,7 @@ export default function PublicAgendaPage() {
   };
 
   const sortedAppointments = [...appointments]
-    .filter(appt => appt.isShared) // Only show shared appointments on public agenda
+    .filter(appt => appt.isShared) 
     .sort((a, b) => {
       const dateA = parseISO(a.date).getTime();
       const dateB = parseISO(b.date).getTime();
@@ -121,7 +122,6 @@ export default function PublicAgendaPage() {
 
   const publicAppointmentsToDisplay = sortedAppointments.filter(appt => {
     const assignedUser = allUsers.find(u => u.id === appt.assignedTo);
-    // Only show if assigned to Mayor or Vice-Mayor AND isShared is true
     return (assignedUser?.role === USER_ROLES.MAYOR || assignedUser?.role === USER_ROLES.VICE_MAYOR) && appt.isShared;
   });
 
@@ -195,4 +195,3 @@ export default function PublicAgendaPage() {
     </div>
   );
 }
-

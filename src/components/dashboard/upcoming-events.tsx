@@ -36,7 +36,7 @@ export function UpcomingEvents({ appointments }: UpcomingEventsProps) {
           <ScrollArea className="h-[300px]">
             <div className="space-y-4">
               {appointments.map((appointment) => (
-                <div key={appointment.id} className={cn("p-4 border rounded-lg bg-card hover:bg-muted/50 transition-colors", appointment.isCompleted && "opacity-75")}>
+                <div key={appointment.id} className={cn("p-4 border rounded-lg bg-card hover:bg-muted/50 transition-all duration-150 shadow-sm hover:shadow-md", appointment.isCompleted && "opacity-75")}> {/* Added shadow-sm hover:shadow-md */}
                   <div className="flex justify-between items-start mb-1">
                     <h3 className={cn("font-semibold text-lg text-primary flex-1 break-words", appointment.isCompleted && "line-through text-muted-foreground")}>{appointment.title}</h3>
                     <div className="flex flex-col items-end gap-1 ml-2 flex-shrink-0">
@@ -97,4 +97,3 @@ export function UpcomingEvents({ appointments }: UpcomingEventsProps) {
     </Card>
   );
 }
-
