@@ -87,17 +87,16 @@ export default function UsersPage() {
         if (!existingUser) throw new Error("Usuário não encontrado para edição.");
         
         const updatedUserData: User = {
-          ...existingUser,
+          ...existingUser, // Spread existing user first to retain fields like id, username
           name: values.name,
           role: values.role,
+          // Explicitly set canViewCalendarsOf from form values
+          canViewCalendarsOf: values.role === USER_ROLES.VIEWER ? values.canViewCalendarsOf || [] : [],
         };
+        
         updateUserInContext(updatedUserData);
-        // Password update would happen here too if `values.password` is set
-        // For this mock, direct password update in localStorage is tricky without hashing
-        // We'll assume for simplicity that if password is provided, it means 'change password'
-        // A real app would require more robust password handling.
+        
         if (values.password) {
-            // Find the user in DEFAULT_USERS_CREDENTIALS and update password (this is a hack for mock)
             const defaultUserIndex = DEFAULT_USERS_CREDENTIALS.findIndex(u => u.id === userIdToUpdate);
             if (defaultUserIndex !== -1) {
                 DEFAULT_USERS_CREDENTIALS[defaultUserIndex].password = values.password;
@@ -106,7 +105,7 @@ export default function UsersPage() {
         toast({ title: "Sucesso!", description: "Usuário atualizado." });
 
       } else { // Creating new user
-        if (!values.password) { // Should be caught by form validation, but defensive check
+        if (!values.password) { 
             toast({ title: "Erro", description: "Senha é obrigatória para novos usuários.", variant: "destructive" });
             setIsLoading(false);
             return;
@@ -117,9 +116,9 @@ export default function UsersPage() {
           name: values.name,
           username: values.username,
           role: values.role,
+          canViewCalendarsOf: values.role === USER_ROLES.VIEWER ? values.canViewCalendarsOf || [] : [],
         };
         addUserInContext(newUser);
-        // Add to mock credentials (hack for mock login)
         DEFAULT_USERS_CREDENTIALS.push({ ...newUser, password: values.password });
         toast({ title: "Sucesso!", description: "Usuário criado." });
       }
@@ -137,7 +136,6 @@ export default function UsersPage() {
     setIsLoading(true);
     try {
       deleteUserInContext(userToDelete);
-       // Remove from mock credentials (hack for mock login)
       const userIndex = DEFAULT_USERS_CREDENTIALS.findIndex(u => u.id === userToDelete);
       if (userIndex > -1) DEFAULT_USERS_CREDENTIALS.splice(userIndex, 1);
 
