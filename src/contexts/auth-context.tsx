@@ -5,7 +5,7 @@ import type { User, Credentials } from '@/types';
 import { DEFAULT_USERS_CREDENTIALS, LOCAL_STORAGE_KEYS } from '@/lib/constants';
 import { useLocalStorage } from '@/hooks/use-local-storage';
 import { useRouter } from 'next/navigation';
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
 
 interface AuthContextType {
   user: User | null;
@@ -22,9 +22,16 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useLocalStorage<User | null>(LOCAL_STORAGE_KEYS.LOGGED_IN_USER, null);
-  const [allUsers, setAllUsers] = useLocalStorage<User[]>(LOCAL_STORAGE_KEYS.USERS, 
-    DEFAULT_USERS_CREDENTIALS.map(({ password, ...userWithoutPassword }) => userWithoutPassword) // Store users without passwords
+  
+  const initialAllUsers = useMemo(() => 
+    DEFAULT_USERS_CREDENTIALS.map(({ password, ...userWithoutPassword }) => userWithoutPassword), 
+    []
   );
+  const [allUsers, setAllUsers] = useLocalStorage<User[]>(
+    LOCAL_STORAGE_KEYS.USERS, 
+    initialAllUsers // Store users without passwords
+  );
+
   const [loading, setLoading] = useState(true);
   const router = useRouter();
 
@@ -41,9 +48,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (foundUser) {
       const { password, ...userToStore } = foundUser; // Don't store password in 'user' state
       setUser(userToStore);
-      // Ensure allUsers list is initialized if empty
-      if (allUsers.length === 0) {
-        setAllUsers(DEFAULT_USERS_CREDENTIALS.map(({ password, ...u }) => u));
+      // Ensure allUsers list is initialized/synced if empty or different
+      // This check might be more robust if initialAllUsers is used as a base for comparison
+      if (allUsers.length === 0) { // Or if the stored allUsers significantly differs from default
+        setAllUsers(initialAllUsers);
       }
       setLoading(false);
       return true;
@@ -51,7 +59,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setUser(null);
     setLoading(false);
     return false;
-  }, [setUser, setLoading, allUsers, setAllUsers]);
+  }, [setUser, setLoading, allUsers, setAllUsers, initialAllUsers]);
 
   const logout = useCallback(() => {
     setUser(null);
@@ -88,3 +96,4 @@ export const useAuth = (): AuthContextType => {
   }
   return context;
 };
+

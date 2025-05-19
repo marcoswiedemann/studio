@@ -20,48 +20,50 @@ interface AppointmentContextType {
 
 const AppointmentContext = createContext<AppointmentContextType | undefined>(undefined);
 
-function initializeAppointments() {
-  const existingAppointments = typeof window !== 'undefined' ? window.localStorage.getItem(LOCAL_STORAGE_KEYS.APPOINTMENTS) : null;
-  if (existingAppointments) {
-    return JSON.parse(existingAppointments);
-  }
-  const initialData = INITIAL_APPOINTMENTS.map((appt, index) => ({
+function initializeAppointmentsSeedData() {
+  return INITIAL_APPOINTMENTS.map((appt, index) => ({
     ...appt,
-    id: `appt-${Date.now()}-${index}`,
+    id: `appt-${Date.now()}-${index}`, // Ensure unique IDs even if called multiple times close together
     createdAt: new Date().toISOString(),
   }));
-  if (typeof window !== 'undefined') {
-    window.localStorage.setItem(LOCAL_STORAGE_KEYS.APPOINTMENTS, JSON.stringify(initialData));
-  }
-  return initialData;
 }
 
 
 export const AppointmentProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const stableEmptyArray = useMemo(() => [], []);
   const [appointments, setAppointments] = useLocalStorage<Appointment[]>(
     LOCAL_STORAGE_KEYS.APPOINTMENTS,
-    [] // Initial empty, will be populated by initializeAppointments if effect runs
+    stableEmptyArray // Use stable reference for initialValue
   );
   const { user } = useAuth();
 
-  // Effect to initialize appointments if localStorage is empty
+  // Effect to initialize appointments with seed data if localStorage is empty
   React.useEffect(() => {
     if (typeof window !== 'undefined') {
       const storedAppointments = window.localStorage.getItem(LOCAL_STORAGE_KEYS.APPOINTMENTS);
-      if (!storedAppointments || JSON.parse(storedAppointments).length === 0) {
-        const initialData = INITIAL_APPOINTMENTS.map((appt, index) => ({
-          ...appt,
-          id: `appt-${Date.now()}-${index}`,
-          createdAt: new Date().toISOString(),
-        }));
-        setAppointments(initialData);
-      } else if (appointments.length === 0 && storedAppointments) {
-         // Sync state if useLocalStorage initializes late
-        setAppointments(JSON.parse(storedAppointments));
+      // Check if localStorage has NO appointments key or if it's an empty array string '[]'
+      if (!storedAppointments || (storedAppointments === "[]" && appointments.length === 0) ) {
+        const initialSeedData = initializeAppointmentsSeedData();
+        setAppointments(initialSeedData);
+      } else if (appointments.length === 0 && storedAppointments && storedAppointments !== "[]") {
+         // Sync state if useLocalStorage initializes late or if storedAppointments is present but state is empty
+        try {
+          const parsedAppointments = JSON.parse(storedAppointments);
+          if (Array.isArray(parsedAppointments)) {
+            setAppointments(parsedAppointments);
+          }
+        } catch (error) {
+          console.error("Error parsing stored appointments from localStorage:", error);
+          // Fallback to seed data if parsing fails and current state is empty
+          if (appointments.length === 0) {
+            setAppointments(initializeAppointmentsSeedData());
+          }
+        }
       }
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []); // Run once on mount
+  }, [setAppointments]); // Removed appointments.length to avoid re-running if appointments change due to other actions.
+                        // This effect is primarily for initial seeding.
 
 
   const getAppointmentsForUser = useCallback((currentUserId: string, role: UserRole, viewDate: Date = new Date(), viewType: 'day' | 'week' | 'month' = 'month'): Appointment[] => {
@@ -156,3 +158,4 @@ export const useAppointments = (): AppointmentContextType => {
   }
   return context;
 };
+
