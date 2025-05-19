@@ -1,5 +1,5 @@
 
-import type { User, Credentials, Appointment } from '@/types'; // Added Appointment type
+import type { User, Credentials, Appointment, ThemeSettings } from '@/types'; // Added Appointment type & ThemeSettings
 
 export const USER_ROLES = {
   ADMIN: 'Admin',
@@ -12,7 +12,45 @@ export const LOCAL_STORAGE_KEYS = {
   LOGGED_IN_USER: 'agendaGovUser',
   USERS: 'agendaGovUsers',
   APPOINTMENTS: 'agendaGovAppointments',
+  THEME_SETTINGS: 'agendaGovThemeSettings', // New key
 };
+
+export const DEFAULT_MAIN_LOGO_URL = "https://pmsantoangelo.abase.com.br/site/Brasoes/120/cabecalho.png";
+
+export const DEFAULT_THEME_SETTINGS: ThemeSettings = {
+  colors: {
+    background: "206 23% 94%",
+    foreground: "210 10% 23%",
+    card: "0 0% 100%",
+    cardForeground: "210 10% 23%",
+    popover: "0 0% 100%",
+    popoverForeground: "210 10% 23%",
+    primary: "231 48% 48%",
+    primaryForeground: "0 0% 100%",
+    secondary: "210 16% 90%",
+    secondaryForeground: "210 10% 23%",
+    muted: "210 16% 90%",
+    mutedForeground: "210 10% 45%",
+    accent: "261 44% 70%",
+    accentForeground: "0 0% 100%",
+    destructive: "0 84.2% 60.2%",
+    destructiveForeground: "0 0% 98%",
+    border: "210 10% 85%",
+    input: "210 10% 85%",
+    ring: "231 48% 48%",
+    // Sidebar defaults from globals.css
+    sidebarBackground: "220 15% 20%",
+    sidebarForeground: "210 40% 98%",
+    sidebarPrimary: "231 48% 48%",
+    sidebarPrimaryForeground: "0 0% 100%",
+    sidebarAccent: "220 15% 28%",
+    sidebarAccentForeground: "210 40% 98%",
+    sidebarBorder: "220 15% 15%",
+    sidebarRing: "231 48% 48%",
+  },
+  mainLogoUrl: DEFAULT_MAIN_LOGO_URL,
+};
+
 
 export const DEFAULT_USERS_CREDENTIALS: Array<User & { password?: string }> = [
   { id: 'user-admin', username: 'admin', password: 'crm123', name: 'Administrador', role: USER_ROLES.ADMIN },
@@ -38,7 +76,7 @@ export const INITIAL_APPOINTMENTS: Omit<Appointment, 'id' | 'createdAt'>[] = [
     notes: 'Discutir metas da semana.',
     contactPerson: 'Secretária Ana - (XX) XXXX-XXXX',
     participants: 'Prefeito, Chefe de Gabinete',
-    isShared: true, // Shared with Vice
+    isShared: true,
   },
   {
     title: 'Alinhamento com Secretariado (Prefeito)',
@@ -60,13 +98,13 @@ export const INITIAL_APPOINTMENTS: Omit<Appointment, 'id' | 'createdAt'>[] = [
     notes: 'Acompanhar andamento.',
     contactPerson: 'Engenheiro Responsável - (XX) ZZZZ-ZZZZ',
     participants: 'Vice-Prefeito, Secretário de Obras',
-    isShared: true, // Shared with Mayor
+    isShared: true,
   },
   {
     title: 'Reunião Orçamentária (Admin)',
     date: new Date(new Date().setDate(new Date().getDate() + 1)).toISOString().split('T')[0],
     time: '11:00',
-    assignedTo: 'user-admin', // Admin can also have appointments
+    assignedTo: 'user-admin', 
     location: 'Sala da Administração',
     notes: 'Definir prioridades orçamentárias.',
     contactPerson: 'Diretor Financeiro',
@@ -85,4 +123,3 @@ export const INITIAL_APPOINTMENTS: Omit<Appointment, 'id' | 'createdAt'>[] = [
     isShared: false,
   }
 ];
-

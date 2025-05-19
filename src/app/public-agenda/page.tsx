@@ -3,6 +3,7 @@
 
 import { useAppointments } from "@/contexts/appointment-context";
 import { useAuth } from "@/contexts/auth-context"; // To get allUsers for names
+import { useSettings } from "@/contexts/settings-context"; // Add this
 import { Appointment } from "@/types";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -65,17 +66,15 @@ function PublicAppointmentItem({ appointment, getUserName }: { appointment: Appo
   );
 }
 
-const logoUrl = "https://pmsantoangelo.abase.com.br/site/Brasoes/120/cabecalho.png";
+// const logoUrl = "https://pmsantoangelo.abase.com.br/site/Brasoes/120/cabecalho.png"; // Remove this
 
 export default function PublicAgendaPage() {
   const { appointments } = useAppointments();
-  const { allUsers, loading: authLoading } = useAuth(); // Use loading state from auth context
+  const { allUsers, loading: authLoading } = useAuth();
+  const { themeSettings } = useSettings(); // Get themeSettings
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // We need allUsers to be loaded to display names, and appointments themselves.
-    // useAppointments doesn't have its own loading state, relies on localStorage sync.
-    // authLoading covers user and allUsers initialization.
     if (!authLoading) {
       setIsLoading(false);
     }
@@ -86,7 +85,6 @@ export default function PublicAgendaPage() {
     return user ? user.name : 'Não disponível';
   };
 
-  // Sort appointments by date and time
   const sortedAppointments = [...appointments].sort((a, b) => {
     const dateA = parseISO(a.date).getTime();
     const dateB = parseISO(b.date).getTime();
@@ -109,14 +107,17 @@ export default function PublicAgendaPage() {
     <div className="min-h-screen bg-background text-foreground">
       <header className="py-6 bg-card border-b border-border">
         <div className="container mx-auto px-4 flex flex-col sm:flex-row items-center gap-4">
-          <Image 
-            src={logoUrl} 
-            alt="Logo Prefeitura Santo Ângelo" 
-            width={150} // Adjust width as needed for header
-            height={75} // Adjust height as needed for header
-            priority
-            data-ai-hint="logo prefeitura"
-          />
+          {themeSettings.mainLogoUrl && (
+            <Image
+              src={themeSettings.mainLogoUrl} // Use themeSettings.mainLogoUrl
+              alt="Logo Prefeitura Santo Ângelo"
+              width={150} 
+              height={75}
+              style={{ objectFit: 'contain' }} // Ensure logo scales nicely
+              priority
+              data-ai-hint="logo prefeitura"
+            />
+          )}
           <div className="text-center sm:text-left">
             <h1 className="text-3xl font-bold text-primary">Agenda Pública da Prefeitura</h1>
             <p className="text-muted-foreground">Compromissos oficiais abertos ao público.</p>
@@ -137,13 +138,13 @@ export default function PublicAgendaPage() {
                 Nenhum compromisso público agendado no momento.
               </p>
             ) : (
-              <ScrollArea className="h-[calc(100vh-320px)] pr-3"> {/* Adjusted height */}
+              <ScrollArea className="h-[calc(100vh-320px)] pr-3"> 
                 <div className="space-y-4">
                   {sortedAppointments.map((appointment) => (
-                    <PublicAppointmentItem 
-                      key={appointment.id} 
-                      appointment={appointment} 
-                      getUserName={getUserName} 
+                    <PublicAppointmentItem
+                      key={appointment.id}
+                      appointment={appointment}
+                      getUserName={getUserName}
                     />
                   ))}
                 </div>

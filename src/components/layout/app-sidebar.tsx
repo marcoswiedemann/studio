@@ -12,10 +12,11 @@ import {
   SidebarMenuItem,
   SidebarMenuButton,
   SidebarFooter,
-} from "@/components/ui/sidebar"; 
+} from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
 import { navItems, NavItem } from "@/config/site";
 import { useAuth } from "@/contexts/auth-context";
+import { useSettings } from "@/contexts/settings-context"; // Add this
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 function getInitials(name: string) {
@@ -27,11 +28,12 @@ function getInitials(name: string) {
   return initials;
 }
 
-const logoUrl = "https://pmsantoangelo.abase.com.br/site/Brasoes/120/cabecalho.png";
+// const logoUrl = "https://pmsantoangelo.abase.com.br/site/Brasoes/120/cabecalho.png"; // Remove this
 
 
 export function AppSidebar() {
   const { user, logout } = useAuth();
+  const { themeSettings } = useSettings(); // Get themeSettings
   const pathname = usePathname();
 
   const filteredNavItems = navItems.filter(item => {
@@ -44,15 +46,17 @@ export function AppSidebar() {
       <SidebarHeader className="p-4">
         <Link href="/dashboard" className="flex items-center gap-2 group-data-[collapsible=icon]:justify-center">
           <div className="group-data-[collapsible=icon]:w-8 group-data-[collapsible=icon]:h-8 w-auto h-10 relative">
-            <Image 
-              src={logoUrl} 
-              alt="Logo AgendaGov" 
-              fill
-              sizes="(max-width: 768px) 32px, 100px" // Adjust sizes as needed
-              style={{ objectFit: 'contain' }}
-              priority
-              data-ai-hint="logo prefeitura"
-            />
+            {themeSettings.mainLogoUrl && (
+              <Image
+                src={themeSettings.mainLogoUrl} // Use themeSettings.mainLogoUrl
+                alt="Logo AgendaGov"
+                fill
+                sizes="(max-width: 768px) 32px, 100px" 
+                style={{ objectFit: 'contain' }}
+                priority
+                data-ai-hint="logo prefeitura"
+              />
+            )}
           </div>
           <span className="font-semibold text-lg text-primary group-data-[collapsible=icon]:hidden ml-2">AgendaGov</span>
         </Link>

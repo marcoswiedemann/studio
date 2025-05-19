@@ -28,3 +28,38 @@ export interface Credentials {
   password?: string; // Optional for cases where password is not needed
 }
 
+export interface ThemeColors {
+  background: string; // HSL string e.g., "206 23% 94%"
+  foreground: string;
+  card: string;
+  cardForeground: string;
+  popover: string;
+  popoverForeground: string;
+  primary: string;
+  primaryForeground: string;
+  secondary: string;
+  secondaryForeground: string;
+  muted: string;
+  mutedForeground: string;
+  accent: string;
+  accentForeground: string;
+  destructive: string;
+  destructiveForeground: string;
+  border: string;
+  input: string;
+  ring: string;
+  // Sidebar specific colors
+  sidebarBackground: string;
+  sidebarForeground: string;
+  sidebarPrimary: string;
+  sidebarPrimaryForeground: string;
+  sidebarAccent: string;
+  sidebarAccentForeground: string;
+  sidebarBorder: string;
+  sidebarRing: string;
+}
+
+export interface ThemeSettings {
+  colors: ThemeColors;
+  mainLogoUrl: string;
+}

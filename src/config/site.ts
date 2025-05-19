@@ -1,7 +1,7 @@
 
 import type { UserRole } from "@/types";
 import type { LucideIcon } from "lucide-react";
-import { LayoutDashboard, CalendarDays, UserCircle, Users, FileText } from "lucide-react"; // Added FileText
+import { LayoutDashboard, CalendarDays, UserCircle, Users, FileText, Settings } from "lucide-react"; // Added Settings
 import { USER_ROLES } from "@/lib/constants";
 
 
@@ -26,7 +26,7 @@ export const navItems: NavItem[] = [
     roles: [USER_ROLES.ADMIN, USER_ROLES.MAYOR, USER_ROLES.VICE_MAYOR, USER_ROLES.VIEWER],
   },
   {
-    title: "Relatórios", // New Item
+    title: "Relatórios",
     href: "/reports",
     icon: FileText,
     roles: [USER_ROLES.ADMIN, USER_ROLES.MAYOR, USER_ROLES.VICE_MAYOR],
@@ -43,5 +43,10 @@ export const navItems: NavItem[] = [
     icon: Users,
     roles: [USER_ROLES.ADMIN],
   },
+  { // New Item for Settings
+    title: "Configurações",
+    href: "/settings",
+    icon: Settings,
+    roles: [USER_ROLES.ADMIN],
+  },
 ];
-

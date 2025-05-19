@@ -16,6 +16,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAuth } from "@/contexts/auth-context";
+import { useSettings } from "@/contexts/settings-context"; // Add this
 import { useRouter } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
 import { useState } from "react";
@@ -28,10 +29,11 @@ const formSchema = z.object({
 
 export function LoginForm() {
   const { login } = useAuth();
+  const { themeSettings } = useSettings(); // Get themeSettings
   const router = useRouter();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
-  const logoUrl = "https://pmsantoangelo.abase.com.br/site/Brasoes/120/cabecalho.png";
+  // const logoUrl = "https://pmsantoangelo.abase.com.br/site/Brasoes/120/cabecalho.png"; // Remove this
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -61,15 +63,18 @@ export function LoginForm() {
     <div className="flex items-center justify-center min-h-screen bg-background p-4">
       <Card className="w-full max-w-md shadow-xl">
         <CardHeader className="text-center">
-          <div className="flex justify-center items-center mb-4">
-            <Image 
-              src={logoUrl} 
-              alt="Logo Prefeitura Santo Ângelo" 
-              width={120} // Adjust width as needed
-              height={60} // Adjust height as needed
-              priority
-              data-ai-hint="logo prefeitura"
-            />
+          <div className="flex justify-center items-center mb-4 h-[60px]"> {/* Added fixed height for container */}
+            {themeSettings.mainLogoUrl && (
+              <Image
+                src={themeSettings.mainLogoUrl} // Use themeSettings.mainLogoUrl
+                alt="Logo Prefeitura Santo Ângelo"
+                width={120}
+                height={60}
+                style={{ objectFit: 'contain' }} // Ensure logo scales nicely
+                priority
+                data-ai-hint="logo prefeitura"
+              />
+            )}
           </div>
           <CardTitle className="text-3xl font-bold">AgendaGov</CardTitle>
           <CardDescription>Sistema de Agendamento da Prefeitura</CardDescription>
