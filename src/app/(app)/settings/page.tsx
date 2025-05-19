@@ -202,7 +202,7 @@ export default function SettingsPage() {
   
   const handleClearLogo = () => {
     form.setValue("mainLogoUrl", "", { shouldValidate: true });
-    setLogoPreview(DEFAULT_MAIN_LOGO_URL);
+    setLogoPreview(DEFAULT_MAIN_LOGO_URL); // Preview shows default if current logo is cleared
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
     }
@@ -231,8 +231,36 @@ export default function SettingsPage() {
           <FormLabel>{label}</FormLabel>
           <FormControl>
             <div className="flex items-center gap-2">
-              <Input placeholder="Ex: #3F51B5" {...field} className="flex-grow" />
-              <div className="w-8 h-8 rounded border" style={{ backgroundColor: field.value }}></div>
+              <Input 
+                placeholder="Ex: #3F51B5" 
+                {...field} 
+                value={field.value || ''}
+                onChange={(e) => {
+                  let value = e.target.value.toUpperCase();
+                  if (!value.startsWith('#')) {
+                    value = '#' + value;
+                  }
+                  // Basic validation for hex characters, allow empty for typing
+                  if (/^#?[0-9A-F]*$/i.test(value) && value.length <= 7) {
+                    field.onChange(value);
+                  } else if (value === '#') {
+                     field.onChange(value); // Allow typing '#'
+                  }
+                }}
+                className="flex-grow"
+              />
+              <input
+                type="color"
+                value={field.value || '#FFFFFF'} // Default to white if field.value is empty or invalid for color picker
+                onChange={(e) => field.onChange(e.target.value.toUpperCase())}
+                className="w-10 h-10 p-0 border-none rounded cursor-pointer flex-shrink-0"
+                style={{ appearance: 'none', WebkitAppearance: 'none', MozAppearance: 'none' }} // Remove default browser styling for color input
+              />
+               {/* This div acts as a visual color swatch, updated by field.value */}
+              <div 
+                className="w-8 h-8 rounded border flex-shrink-0" 
+                style={{ backgroundColor: field.value && /^#([0-9A-Fa-f]{6}|[0-9A-Fa-f]{3})$/.test(field.value) ? field.value : 'transparent' }}
+              ></div>
             </div>
           </FormControl>
           <FormMessage />
@@ -311,16 +339,16 @@ export default function SettingsPage() {
                         onError={(e) => {
                             const target = e.target as HTMLImageElement;
                             target.alt = "Falha ao carregar preview do logo";
-                            target.style.display = 'none';
+                            target.style.display = 'none'; // Hide broken image icon
                             const parent = target.parentElement;
                             if (parent && !parent.querySelector('.logo-error-message')) {
                                 const errorMsg = document.createElement('p');
-                                errorMsg.textContent = 'Falha ao carregar preview do logo.';
+                                errorMsg.textContent = 'Falha ao carregar preview do logo. Verifique a URL ou o arquivo enviado.';
                                 errorMsg.className = 'text-destructive text-sm logo-error-message';
                                 parent.appendChild(errorMsg);
                             }
                         }}
-                        onLoad={(e) => {
+                        onLoad={(e) => { // Clear error message on successful load
                             const target = e.target as HTMLImageElement;
                             target.style.display = 'block';
                              const parent = target.parentElement;
