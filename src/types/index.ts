@@ -19,6 +19,7 @@ export interface Appointment {
   notes?: string;
   contactPerson?: string;
   participants?: string;
+  isShared?: boolean; // Added for sharing between Mayor and Vice-Mayor
   createdAt: string; // ISO string
 }
 
@@ -26,3 +27,4 @@ export interface Credentials {
   username: string;
   password?: string; // Optional for cases where password is not needed
 }
+

@@ -30,7 +30,7 @@ export const DEFAULT_USERS_CREDENTIALS: Array<User & { password?: string }> = [
 
 export const INITIAL_APPOINTMENTS: Omit<Appointment, 'id' | 'createdAt'>[] = [
   {
-    title: 'Reunião de Planejamento Semanal',
+    title: 'Reunião de Planejamento Semanal (Prefeito)',
     date: new Date(new Date().setDate(new Date().getDate() + 1)).toISOString().split('T')[0],
     time: '10:00',
     assignedTo: 'user-prefeito',
@@ -38,9 +38,10 @@ export const INITIAL_APPOINTMENTS: Omit<Appointment, 'id' | 'createdAt'>[] = [
     notes: 'Discutir metas da semana.',
     contactPerson: 'Secretária Ana - (XX) XXXX-XXXX',
     participants: 'Prefeito, Chefe de Gabinete',
+    isShared: true, // Shared with Vice
   },
   {
-    title: 'Alinhamento com Secretariado',
+    title: 'Alinhamento com Secretariado (Prefeito)',
     date: new Date(new Date().setDate(new Date().getDate() + 2)).toISOString().split('T')[0],
     time: '14:30',
     assignedTo: 'user-prefeito',
@@ -48,9 +49,10 @@ export const INITIAL_APPOINTMENTS: Omit<Appointment, 'id' | 'createdAt'>[] = [
     notes: 'Revisar progresso dos projetos.',
     contactPerson: 'Chefe de Gabinete - (XX) YYYY-YYYY',
     participants: 'Prefeito, Todos os Secretários',
+    isShared: false,
   },
   {
-    title: 'Visita à Obra Pública X',
+    title: 'Visita à Obra Pública X (Vice)',
     date: new Date(new Date().setDate(new Date().getDate() + 3)).toISOString().split('T')[0],
     time: '09:00',
     assignedTo: 'user-vice',
@@ -58,9 +60,10 @@ export const INITIAL_APPOINTMENTS: Omit<Appointment, 'id' | 'createdAt'>[] = [
     notes: 'Acompanhar andamento.',
     contactPerson: 'Engenheiro Responsável - (XX) ZZZZ-ZZZZ',
     participants: 'Vice-Prefeito, Secretário de Obras',
+    isShared: true, // Shared with Mayor
   },
   {
-    title: 'Reunião Orçamentária',
+    title: 'Reunião Orçamentária (Admin)',
     date: new Date(new Date().setDate(new Date().getDate() + 1)).toISOString().split('T')[0],
     time: '11:00',
     assignedTo: 'user-admin', // Admin can also have appointments
@@ -68,5 +71,18 @@ export const INITIAL_APPOINTMENTS: Omit<Appointment, 'id' | 'createdAt'>[] = [
     notes: 'Definir prioridades orçamentárias.',
     contactPerson: 'Diretor Financeiro',
     participants: 'Admin, Diretor Financeiro, Contador',
+    isShared: false,
   },
+  {
+    title: 'Café com Lideranças Comunitárias (Vice)',
+    date: new Date(new Date().setDate(new Date().getDate() + 4)).toISOString().split('T')[0],
+    time: '08:30',
+    assignedTo: 'user-vice',
+    location: 'Centro Comunitário Central',
+    notes: 'Ouvir demandas da comunidade.',
+    contactPerson: 'Líder Comunitário - (XX) AAAA-AAAA',
+    participants: 'Vice-Prefeita, Assessores',
+    isShared: false,
+  }
 ];
+

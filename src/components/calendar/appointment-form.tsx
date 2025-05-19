@@ -17,8 +17,9 @@ import {
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { CalendarIcon, Users, Phone } from "lucide-react";
+import { CalendarIcon, Users, Phone, Share2 } from "lucide-react";
 import { Calendar } from "@/components/ui/calendar";
+import { Checkbox } from "@/components/ui/checkbox"; // Import Checkbox
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
@@ -26,6 +27,7 @@ import { ptBR } from "date-fns/locale";
 import type { Appointment, User } from "@/types";
 import { useAuth } from "@/contexts/auth-context";
 import { USER_ROLES } from "@/lib/constants";
+import React from "react"; // Import React for JSX
 
 const appointmentFormSchema = z.object({
   title: z.string().min(1, "Título é obrigatório."),
@@ -36,13 +38,14 @@ const appointmentFormSchema = z.object({
   notes: z.string().optional(),
   contactPerson: z.string().optional(),
   participants: z.string().optional(),
+  isShared: z.boolean().optional(), // Added isShared field
 });
 
 export type AppointmentFormValues = z.infer<typeof appointmentFormSchema>;
 
 interface AppointmentFormProps {
   onSubmit: (values: AppointmentFormValues) => void;
-  initialData?: Partial<Appointment> & { date?: Date }; // Ensure initialData.date is a Date object
+  initialData?: Partial<Appointment> & { date?: Date };
   onCancel?: () => void;
   isLoading?: boolean;
 }
@@ -56,14 +59,14 @@ export function AppointmentForm({ onSubmit, initialData, onCancel, isLoading }: 
     resolver: zodResolver(appointmentFormSchema),
     defaultValues: {
       title: initialData?.title || "",
-      // If initialData.date is provided (and it should be a Date object from CalendarPage), use it. Otherwise, default to new Date().
-      date: initialData?.date || new Date(),
+      date: initialData?.date instanceof Date ? initialData.date : new Date(),
       time: initialData?.time || "09:00",
       assignedTo: defaultAssignedTo,
       location: initialData?.location || "",
       notes: initialData?.notes || "",
       contactPerson: initialData?.contactPerson || "",
       participants: initialData?.participants || "",
+      isShared: initialData?.isShared || false,
     },
   });
   
@@ -72,6 +75,15 @@ export function AppointmentForm({ onSubmit, initialData, onCancel, isLoading }: 
   const handleSubmit = (values: AppointmentFormValues) => {
     onSubmit(values);
   };
+
+  const showShareOption = user?.role === USER_ROLES.MAYOR || user?.role === USER_ROLES.VICE_MAYOR;
+  let shareWithUserName = "";
+  if (showShareOption) {
+    const otherExecutiveRole = user?.role === USER_ROLES.MAYOR ? USER_ROLES.VICE_MAYOR : USER_ROLES.MAYOR;
+    const otherExecutive = allUsers.find(u => u.role === otherExecutiveRole);
+    shareWithUserName = otherExecutive ? otherExecutive.name : otherExecutiveRole;
+  }
+
 
   return (
     <Form {...form}>
@@ -171,6 +183,34 @@ export function AppointmentForm({ onSubmit, initialData, onCancel, isLoading }: 
             </FormItem>
           )}
         />
+
+        {showShareOption && (
+           <FormField
+            control={form.control}
+            name="isShared"
+            render={({ field }) => (
+              <FormItem className="flex flex-row items-center space-x-3 space-y-0 rounded-md border p-4 shadow-sm">
+                <FormControl>
+                  <Checkbox
+                    checked={field.value}
+                    onCheckedChange={field.onChange}
+                    id="isShared"
+                  />
+                </FormControl>
+                <div className="space-y-1 leading-none">
+                  <FormLabel htmlFor="isShared" className="flex items-center cursor-pointer">
+                    <Share2 className="h-4 w-4 mr-2 text-muted-foreground" />
+                    Compartilhar com {shareWithUserName}
+                  </FormLabel>
+                   <FormDescription>
+                    Se marcado, este compromisso também aparecerá na agenda de {shareWithUserName}.
+                  </FormDescription>
+                </div>
+              </FormItem>
+            )}
+          />
+        )}
+
         <FormField
           control={form.control}
           name="location"
@@ -233,3 +273,4 @@ export function AppointmentForm({ onSubmit, initialData, onCancel, isLoading }: 
     </Form>
   );
 }
+
