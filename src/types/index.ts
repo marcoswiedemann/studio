@@ -9,14 +9,14 @@ export interface User {
   id: string;
   username: string;
   name: string;
-  password?: string;
+  password?: string; // Opcional no frontend, obrigatório no backend/seed
   role: UserRole;
   canViewCalendarsOf?: string[];
-  createdAt?: string | Date;
-  updatedAt?: string | Date;
+  createdAt?: string | Date; // Prisma usa Date, string para API
+  updatedAt?: string | Date; // Prisma usa Date, string para API
 }
 
-// Interface para Appointment no frontend, pode ser ligeiramente diferente do Prisma model
+// Interface para Appointment no frontend, pode ser ligeiramente diferente do modelo Prisma
 // se precisarmos de campos formatados ou adicionais no cliente.
 export interface Appointment {
   id: string;
@@ -76,10 +76,10 @@ export interface ThemeColors {
 }
 
 export interface ThemeSettings {
-  id?: string;
+  id?: string; // Adicionado para corresponder ao modelo Prisma
   userId?: string; // Se as configurações forem por usuário no DB
   appName: string;
-  colors: ThemeColors;
+  colors: ThemeColors; // Este campo será mapeado para os campos de cor individuais no Prisma
   logoLightModeUrl: string;
   logoDarkModeUrl: string;
 }

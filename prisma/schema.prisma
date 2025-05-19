@@ -11,37 +11,37 @@ datasource db {
 model User {
   id                  String        @id @default(cuid())
   username            String        @unique
+  password            String // ATENÇÃO: Armazenar senhas hasheadas em produção!
   name                String
-  password            String // IMPORTANT: Store hashed passwords in production!
   role                UserRole
-  canViewCalendarsOf  String[] // Stores User IDs
+  canViewCalendarsOf  String[] // Armazena IDs de outros usuários
   createdAt           DateTime      @default(now())
   updatedAt           DateTime      @updatedAt
-  createdAppointments Appointment[] @relation("CreatedBy")
-  assignedAppointments Appointment[] @relation("AssignedTo")
-  updatedAppointments Appointment[] @relation("UpdatedBy")
-  themeSettings       ThemeSettings? @relation("UserThemeSettings")
+  appointmentsAssigned Appointment[] @relation("AssignedAppointments")
+  appointmentsCreated  Appointment[] @relation("CreatedAppointments")
+  appointmentsUpdated  Appointment[] @relation("UpdatedAppointments")
+  themeSettings       ThemeSettings?
 }
 
 model Appointment {
-  id            String    @id @default(cuid())
-  title         String
-  date          DateTime  @db.Date // Store only date part
-  time          String // HH:mm format
-  assignedToId  String
-  assignedTo    User      @relation("AssignedTo", fields: [assignedToId], references: [id])
-  location      String?
-  notes         String?   @db.Text
-  contactPerson String?
-  participants  String?   @db.Text
-  isShared      Boolean   @default(false)
-  isCompleted   Boolean   @default(false)
-  createdAt     DateTime  @default(now())
-  createdById   String
-  createdBy     User      @relation("CreatedBy", fields: [createdById], references: [id])
-  updatedAt     DateTime? @updatedAt
-  updatedById   String?
-  updatedBy     User?     @relation("UpdatedBy", fields: [updatedById], references: [id])
+  id                String    @id @default(cuid())
+  title             String
+  date              DateTime
+  time              String // Formato HH:MM
+  assignedToId      String
+  assignedTo        User      @relation("AssignedAppointments", fields: [assignedToId], references: [id])
+  location          String?
+  notes             String?
+  contactPerson     String?
+  participants      String?
+  isShared          Boolean   @default(false)
+  isCompleted       Boolean   @default(false)
+  createdAt         DateTime  @default(now())
+  createdById       String
+  createdBy         User      @relation("CreatedAppointments", fields: [createdById], references: [id])
+  updatedAt         DateTime? @updatedAt
+  updatedById       String?
+  updatedBy         User?     @relation("UpdatedAppointments", fields: [updatedById], references: [id])
 
   @@index([assignedToId])
   @@index([createdById])
@@ -49,48 +49,44 @@ model Appointment {
 }
 
 model ThemeSettings {
-  id                  String   @id @default(cuid())
-  userId              String   @unique // Each user can have one theme setting for now, or make it global
-  user                User     @relation("UserThemeSettings", fields: [userId], references: [id])
-  appName             String
-  logoLightModeUrl    String   @db.Text
-  logoDarkModeUrl     String   @db.Text
-  backgroundColor     String
-  foregroundColor     String
-  cardColor           String
-  cardForegroundColor String
-  popoverColor        String
-  popoverForegroundColor String
-  primaryColor        String
-  primaryForegroundColor String
-  secondaryColor      String
-  secondaryForegroundColor String
-  mutedColor          String
-  mutedForegroundColor String
-  accentColor         String
-  accentForegroundColor String
-  destructiveColor    String
-  destructiveForegroundColor String
-  borderColor         String
-  inputColor          String
-  ringColor           String
-  sidebarBackgroundColor  String
-  sidebarForegroundColor  String
-  sidebarPrimaryColor     String
-  sidebarPrimaryForegroundColor String
-  sidebarAccentColor      String
-  sidebarAccentForegroundColor String
-  sidebarBorderColor      String
-  sidebarRingColor        String
-  createdAt           DateTime @default(now())
-  updatedAt           DateTime @updatedAt
-
-  @@index([userId])
+  id                       String @id @default(cuid())
+  userId                   String @unique // Vinculado a um usuário específico (ex: admin) ou pode ser global
+  user                     User   @relation(fields: [userId], references: [id])
+  appName                  String @default("AgendaGov")
+  logoLightModeUrl         String @default("https://pmsantoangelo.abase.com.br/site/Brasoes/120/cabecalho.png")
+  logoDarkModeUrl          String @default("https://pmsantoangelo.abase.com.br/site/Brasoes/120/cabecalho.png")
+  backgroundColor          String @default("#ECEFF1")
+  foregroundColor          String @default("#383A3D")
+  cardColor                String @default("#FFFFFF")
+  cardForegroundColor      String @default("#383A3D")
+  popoverColor             String @default("#FFFFFF")
+  popoverForegroundColor   String @default("#383A3D")
+  primaryColor             String @default("#3F51B5")
+  primaryForegroundColor   String @default("#FFFFFF")
+  secondaryColor           String @default("#E0E5E9")
+  secondaryForegroundColor String @default("#383A3D")
+  mutedColor               String @default("#E0E5E9")
+  mutedForegroundColor     String @default("#696E75")
+  accentColor              String @default("#9575CD")
+  accentForegroundColor    String @default("#FFFFFF")
+  destructiveColor         String @default("#F44336")
+  destructiveForegroundColor String @default("#FAFAFA")
+  borderColor              String @default("#D3D7DB")
+  inputColor               String @default("#D3D7DB")
+  ringColor                String @default("#3F51B5")
+  sidebarBackgroundColor   String @default("#2B303B")
+  sidebarForegroundColor   String @default("#F9FAFC")
+  sidebarPrimaryColor      String @default("#3F51B5")
+  sidebarPrimaryForegroundColor String @default("#FFFFFF")
+  sidebarAccentColor       String @default("#3C4352")
+  sidebarAccentForegroundColor  String @default("#F9FAFC")
+  sidebarBorderColor       String @default("#1F2329")
+  sidebarRingColor         String @default("#3F51B5")
 }
 
 enum UserRole {
   Admin
   Prefeito
-  Vice_prefeito // Prisma enums cannot have spaces
+  Vice_prefeito
   Visualizador
 }

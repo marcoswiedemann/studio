@@ -12,10 +12,11 @@ interface AuthContextType {
   login: (credentials: Credentials) => Promise<boolean>;
   logout: () => void;
   loading: boolean;
-  allUsers: User[]; // This will need to be fetched from DB later
-  updateUserInContext: (updatedUser: User) => void; // Will be refactored for API
-  addUserInContext: (newUser: User) => void; // Will be refactored for API
-  deleteUserInContext: (userId: string) => void; // Will be refactored for API
+  allUsers: User[]; // Será populado via API no futuro
+  setAllUsers: React.Dispatch<React.SetStateAction<User[]>>; // Para permitir atualização via API
+  updateUserInContext: (updatedUser: User) => void; // Será refatorado para API
+  addUserInContext: (newUser: User) => void; // Será refatorado para API
+  deleteUserInContext: (userId: string) => void; // Será refatorado para API
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -23,26 +24,25 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useLocalStorage<User | null>(LOCAL_STORAGE_KEYS.LOGGED_IN_USER, null);
   
-  // TODO: Fetch allUsers from the database instead of localStorage or constants
+  // allUsers será gerenciado via API no futuro. Por enquanto, pode ser inicializado vazio.
   const [allUsers, setAllUsers] = useState<User[]>([]); 
   const [loading, setLoading] = useState(true);
   const router = useRouter();
 
   useEffect(() => {
-    // Initial load check
+    // Verificação inicial de carregamento
     if (user) {
-      // Optionally re-validate session with backend here
+      // Opcionalmente, revalidar sessão com backend aqui
     }
     setLoading(false);
   }, [user]);
 
-  // TODO: Fetch allUsers from an API endpoint when the app loads or context initializes
-  // For now, this will be empty and needs to be populated from the DB for UserForm dropdowns etc.
-  // Example:
+  // TODO: No futuro, buscar allUsers de um endpoint da API quando o app carregar
   // useEffect(() => {
   //   const fetchUsers = async () => {
+  //     setLoading(true);
   //     try {
-  //       const response = await fetch('/api/users'); // Assuming you create this endpoint
+  //       const response = await fetch('/api/users'); 
   //       if (response.ok) {
   //         const data = await response.json();
   //         setAllUsers(data.users);
@@ -50,6 +50,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   //     } catch (error) {
   //       console.error("Failed to fetch users:", error);
   //     }
+  //     setLoading(false);
   //   };
   //   fetchUsers();
   // }, []);
@@ -71,57 +72,55 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setLoading(false);
         return true;
       } else {
-        setUser(null);
+        setUser(null); // Garante que o usuário seja nulo em caso de falha
         setLoading(false);
-        // Use message from API if available, otherwise a generic one
         throw new Error(data.message || 'Falha no login.');
       }
     } catch (error) {
       console.error('Login failed:', error);
-      setUser(null);
+      setUser(null); // Garante que o usuário seja nulo em caso de erro
       setLoading(false);
-      // Rethrow or handle appropriately for toast message
       if (error instanceof Error) {
           throw error;
       }
       throw new Error('Erro de conexão ou resposta inesperada.');
     }
-  }, [setUser, setLoading]);
+  }, [setUser, setLoading]); // Removido router das dependências, pois o redirecionamento é feito no componente de login
 
   const logout = useCallback(() => {
     setUser(null);
-    // Optionally call an API endpoint to invalidate session/token on server
+    // Opcionalmente, chamar um endpoint da API para invalidar sessão/token no servidor
     router.push('/');
   }, [setUser, router]);
 
-  // These functions will need to be refactored to make API calls to a backend
-  // that interacts with Prisma to modify user data in the database.
-  // For now, they will only affect the local `allUsers` state if it's populated.
+  // Estas funções precisarão ser refatoradas para fazer chamadas API para um backend
+  // que interage com o Prisma para modificar dados de usuário no banco.
+  // Por enquanto, elas afetarão apenas o estado local `allUsers` se ele estiver populado.
   const updateUserInContext = (updatedUser: User) => {
-    // TODO: Replace with API call: PUT /api/users/{userId}
-    setAllUsers(prevUsers => prevUsers.map(u => (u.id === updatedUser.id ? updatedUser : u)));
+    // TODO: Substituir por chamada API: PUT /api/users/{userId}
+    // Exemplo: setAllUsers(prevUsers => prevUsers.map(u => (u.id === updatedUser.id ? updatedUser : u)));
     if (user?.id === updatedUser.id) {
-      setUser(updatedUser);
+      setUser(updatedUser); // Atualiza o usuário logado se for o mesmo
     }
-    console.warn("updateUserInContext is using local state. Needs API integration.");
+    console.warn("updateUserInContext está usando estado local. Necessita integração com API.");
   };
 
   const addUserInContext = (newUser: User) => {
-    // TODO: Replace with API call: POST /api/users
-    // The API should handle password hashing before saving to DB
-    setAllUsers(prevUsers => [...prevUsers, newUser]);
-    console.warn("addUserInContext is using local state. Needs API integration.");
+    // TODO: Substituir por chamada API: POST /api/users
+    // A API deve lidar com hashing de senha antes de salvar no BD
+    // Exemplo: setAllUsers(prevUsers => [...prevUsers, newUser]);
+    console.warn("addUserInContext está usando estado local. Necessita integração com API.");
   };
 
   const deleteUserInContext = (userId: string) => {
-    // TODO: Replace with API call: DELETE /api/users/{userId}
-    setAllUsers(prevUsers => prevUsers.filter(u => u.id !== userId));
-    console.warn("deleteUserInContext is using local state. Needs API integration.");
+    // TODO: Substituir por chamada API: DELETE /api/users/{userId}
+    // Exemplo: setAllUsers(prevUsers => prevUsers.filter(u => u.id !== userId));
+    console.warn("deleteUserInContext está usando estado local. Necessita integração com API.");
   };
 
 
   return (
-    <AuthContext.Provider value={{ user, login, logout, loading, allUsers, updateUserInContext, addUserInContext, deleteUserInContext }}>
+    <AuthContext.Provider value={{ user, login, logout, loading, allUsers, setAllUsers, updateUserInContext, addUserInContext, deleteUserInContext }}>
       {children}
     </AuthContext.Provider>
   );

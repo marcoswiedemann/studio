@@ -12,12 +12,15 @@ export const USER_ROLES = PrismaUserRoleEnum;
 
 export const LOCAL_STORAGE_KEYS = {
   LOGGED_IN_USER: 'agendaGovUser',
-  // APPOINTMENTS: 'agendaGovAppointments', // Agora é gerenciado pelo estado do contexto, não mais localStorage direto
-  THEME_SETTINGS: 'agendaGovThemeSettings',
+  // APPOINTMENTS: 'agendaGovAppointments', // Removido, dados virão do DB
+  THEME_SETTINGS: 'agendaGovThemeSettings', // Configurações de tema ainda no localStorage por enquanto
 };
 
 export const DEFAULT_LOGO_URL = "https://pmsantoangelo.abase.com.br/site/Brasoes/120/cabecalho.png";
 
+// As cores no DEFAULT_THEME_SETTINGS são HSL porque o globals.css usa HSL.
+// O SettingsContext converterá hex para HSL ao aplicar.
+// O schema Prisma para ThemeSettings armazenará cores como strings (HEX).
 export const DEFAULT_THEME_SETTINGS: ThemeSettings = {
   appName: 'AgendaGov',
   colors: {
@@ -36,7 +39,7 @@ export const DEFAULT_THEME_SETTINGS: ThemeSettings = {
     accent: "#9575CD",
     accentForeground: "#FFFFFF",
     destructive: "#F44336",
-    destructiveForeground: "#FAFAFA",
+    destructiveForegroundColor: "#FAFAFA",
     border: "#D3D7DB",
     input: "#D3D7DB",
     ring: "#3F51B5",
@@ -53,6 +56,7 @@ export const DEFAULT_THEME_SETTINGS: ThemeSettings = {
   logoDarkModeUrl: DEFAULT_LOGO_URL,
 };
 
-// INITIAL_APPOINTMENTS foi removido pois os dados agora vêm do seed do Prisma.
-// Se precisar de dados mock para testes sem DB, podem ser adicionados aqui,
-// mas o AppointmentContext não os usa mais diretamente para inicialização.
+// DEFAULT_USERS_CREDENTIALS e INITIAL_APPOINTMENTS foram removidos.
+// Os usuários e compromissos iniciais agora são gerenciados pelo script prisma/seed.ts.
+// Os dados de tema (ThemeSettings) ainda são gerenciados via localStorage e SettingsContext,
+// mas o schema Prisma para ThemeSettings foi criado para uma futura migração para o banco.
