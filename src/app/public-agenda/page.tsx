@@ -8,22 +8,38 @@ import { Appointment } from "@/types";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
-import { CalendarClock, MapPin, User as UserIcon, Phone, Users as UsersIcon, Info } from "lucide-react";
+import { CalendarClock, MapPin, User as UserIcon, Phone, Users as UsersIcon, Info, CheckCircle2, XCircle } from "lucide-react";
 import Image from "next/image";
 import { format, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useEffect, useState } from "react";
 import { Loader2 } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 function PublicAppointmentItem({ appointment, getUserName }: { appointment: Appointment; getUserName: (userId: string) => string }) {
   return (
-    <div className="p-4 border rounded-lg bg-card shadow-sm">
+    <div className={cn("p-4 border rounded-lg bg-card shadow-sm", appointment.isCompleted && "opacity-75")}>
       <div className="flex justify-between items-start mb-2">
-        <h3 className="font-semibold text-lg text-primary pr-2 flex-1 break-words">{appointment.title}</h3>
-        <div className="flex-shrink-0 ml-2">
+        <h3 className={cn(
+            "font-semibold text-lg text-primary pr-2 flex-1 break-words",
+            appointment.isCompleted && "line-through text-muted-foreground"
+          )}
+        >
+          {appointment.title}
+        </h3>
+        <div className="flex-shrink-0 ml-2 flex flex-col items-end gap-1">
           <Badge variant="outline">
             {format(parseISO(appointment.date), "dd/MM/yy", { locale: ptBR })}
           </Badge>
+          {appointment.isCompleted ? (
+            <Badge variant="default" className="bg-green-600 hover:bg-green-700 text-white">
+              <CheckCircle2 className="h-3 w-3 mr-1" /> Realizado
+            </Badge>
+          ) : (
+            <Badge variant="secondary">
+              <XCircle className="h-3 w-3 mr-1" /> Pendente
+            </Badge>
+          )}
         </div>
       </div>
 
@@ -83,14 +99,16 @@ export default function PublicAgendaPage() {
     return user ? user.name : 'Não disponível';
   };
 
-  const sortedAppointments = [...appointments].sort((a, b) => {
-    const dateA = parseISO(a.date).getTime();
-    const dateB = parseISO(b.date).getTime();
-    if (dateA !== dateB) {
-      return dateA - dateB;
-    }
-    return a.time.localeCompare(b.time);
-  });
+  const sortedAppointments = [...appointments]
+    .filter(appt => appt.isShared) // Only show shared appointments on public agenda
+    .sort((a, b) => {
+      const dateA = parseISO(a.date).getTime();
+      const dateB = parseISO(b.date).getTime();
+      if (dateA !== dateB) {
+        return dateA - dateB;
+      }
+      return a.time.localeCompare(b.time);
+    });
 
   if (isLoading) {
     return (
@@ -100,6 +118,13 @@ export default function PublicAgendaPage() {
       </div>
     );
   }
+
+  const publicAppointmentsToDisplay = sortedAppointments.filter(appt => {
+    const assignedUser = allUsers.find(u => u.id === appt.assignedTo);
+    // Only show if assigned to Mayor or Vice-Mayor AND isShared is true
+    return (assignedUser?.role === USER_ROLES.MAYOR || assignedUser?.role === USER_ROLES.VICE_MAYOR) && appt.isShared;
+  });
+
 
   return (
     <div className="min-h-screen bg-background text-foreground">
@@ -140,18 +165,18 @@ export default function PublicAgendaPage() {
           <CardHeader>
             <CardTitle className="text-2xl">Próximos Compromissos</CardTitle>
             <CardDescription>
-              Confira os compromissos agendados. Esta agenda é atualizada periodicamente.
+              Confira os compromissos agendados. Esta agenda é atualizada periodicamente. Somente compromissos marcados como "compartilhados" pelo Prefeito ou Vice-Prefeito são exibidos aqui.
             </CardDescription>
           </CardHeader>
           <CardContent>
-            {sortedAppointments.length === 0 ? (
+            {publicAppointmentsToDisplay.length === 0 ? (
               <p className="text-muted-foreground text-center py-10">
                 Nenhum compromisso público agendado no momento.
               </p>
             ) : (
               <ScrollArea className="h-[calc(100vh-320px)] pr-3"> 
                 <div className="space-y-4">
-                  {sortedAppointments.map((appointment) => (
+                  {publicAppointmentsToDisplay.map((appointment) => (
                     <PublicAppointmentItem
                       key={appointment.id}
                       appointment={appointment}
@@ -170,3 +195,4 @@ export default function PublicAgendaPage() {
     </div>
   );
 }
+

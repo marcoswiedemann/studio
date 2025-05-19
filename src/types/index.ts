@@ -19,7 +19,8 @@ export interface Appointment {
   notes?: string;
   contactPerson?: string;
   participants?: string;
-  isShared?: boolean; // Added for sharing between Mayor and Vice-Mayor
+  isShared?: boolean;
+  isCompleted?: boolean; // Added for appointment status
   createdAt: string; // ISO string
 }
 
@@ -60,7 +61,7 @@ export interface ThemeColors {
 }
 
 export interface ThemeSettings {
-  appName: string; // Added appName
+  appName: string;
   colors: ThemeColors;
   logoLightModeUrl: string; 
   logoDarkModeUrl: string;  

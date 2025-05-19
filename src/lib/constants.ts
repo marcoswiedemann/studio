@@ -18,7 +18,7 @@ export const LOCAL_STORAGE_KEYS = {
 export const DEFAULT_LOGO_URL = "https://pmsantoangelo.abase.com.br/site/Brasoes/120/cabecalho.png";
 
 export const DEFAULT_THEME_SETTINGS: ThemeSettings = {
-  appName: 'AgendaGov', // Added default appName
+  appName: 'AgendaGov',
   colors: {
     background: "#ECEFF1", 
     foreground: "#383A3D", 
@@ -78,6 +78,7 @@ export const INITIAL_APPOINTMENTS: Omit<Appointment, 'id' | 'createdAt'>[] = [
     contactPerson: 'Secretária Ana - (XX) XXXX-XXXX',
     participants: 'Prefeito, Chefe de Gabinete',
     isShared: true,
+    isCompleted: false,
   },
   {
     title: 'Alinhamento com Secretariado (Prefeito)',
@@ -89,6 +90,7 @@ export const INITIAL_APPOINTMENTS: Omit<Appointment, 'id' | 'createdAt'>[] = [
     contactPerson: 'Chefe de Gabinete - (XX) YYYY-YYYY',
     participants: 'Prefeito, Todos os Secretários',
     isShared: false,
+    isCompleted: false,
   },
   {
     title: 'Visita à Obra Pública X (Vice)',
@@ -100,6 +102,7 @@ export const INITIAL_APPOINTMENTS: Omit<Appointment, 'id' | 'createdAt'>[] = [
     contactPerson: 'Engenheiro Responsável - (XX) ZZZZ-ZZZZ',
     participants: 'Vice-Prefeito, Secretário de Obras',
     isShared: true,
+    isCompleted: false,
   },
   {
     title: 'Reunião Orçamentária (Admin)',
@@ -111,6 +114,7 @@ export const INITIAL_APPOINTMENTS: Omit<Appointment, 'id' | 'createdAt'>[] = [
     contactPerson: 'Diretor Financeiro',
     participants: 'Admin, Diretor Financeiro, Contador',
     isShared: false,
+    isCompleted: false,
   },
   {
     title: 'Café com Lideranças Comunitárias (Vice)',
@@ -122,5 +126,7 @@ export const INITIAL_APPOINTMENTS: Omit<Appointment, 'id' | 'createdAt'>[] = [
     contactPerson: 'Líder Comunitário - (XX) AAAA-AAAA',
     participants: 'Vice-Prefeita, Assessores',
     isShared: false,
+    isCompleted: false,
   }
 ];
+

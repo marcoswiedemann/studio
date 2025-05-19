@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { CalendarClock, MapPin, Edit3, Trash2, User as UserIcon, Phone, Users as UsersIcon, Info } from "lucide-react";
+import { CalendarClock, MapPin, Edit3, Trash2, User as UserIcon, Phone, Users as UsersIcon, Info, CheckCircle2, XCircle } from "lucide-react";
 import { format, parseISO, isSameDay as dateFnsIsSameDay } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useAuth } from "@/contexts/auth-context";
@@ -52,16 +52,32 @@ export function AppointmentList({ appointments, title, onEdit, onDelete, isReadO
                   key={appointment.id} 
                   className={cn(
                     "p-4 border rounded-lg bg-card hover:bg-muted/50 transition-colors relative group",
-                    canModify(appointment) && "cursor-pointer"
+                    canModify(appointment) && "cursor-pointer",
+                    appointment.isCompleted && "opacity-75"
                   )}
                   onClick={() => { if(canModify(appointment)) onEdit(appointment); }}
                 >
                   <div className="flex justify-between items-start mb-2">
-                    <h3 className="font-semibold text-lg text-primary pr-2 flex-1 break-words">{appointment.title}</h3>
-                    <div className="flex-shrink-0 ml-2">
-                       <Badge variant={parseISO(appointment.date) < new Date() && !dateFnsIsSameDay(parseISO(appointment.date), new Date()) ? "destructive" : "outline"}>
+                    <h3 className={cn(
+                        "font-semibold text-lg text-primary pr-2 flex-1 break-words",
+                        appointment.isCompleted && "line-through text-muted-foreground"
+                      )}
+                    >
+                      {appointment.title}
+                    </h3>
+                    <div className="flex-shrink-0 ml-2 flex flex-col items-end gap-1">
+                       <Badge variant={parseISO(appointment.date) < new Date() && !dateFnsIsSameDay(parseISO(appointment.date), new Date()) && !appointment.isCompleted ? "destructive" : "outline"}>
                         {format(parseISO(appointment.date), "dd/MM/yy", { locale: ptBR })}
                       </Badge>
+                      {appointment.isCompleted ? (
+                        <Badge variant="default" className="bg-green-600 hover:bg-green-700 text-white">
+                          <CheckCircle2 className="h-3 w-3 mr-1" /> Realizado
+                        </Badge>
+                      ) : (
+                        <Badge variant="secondary">
+                          <XCircle className="h-3 w-3 mr-1" /> Pendente
+                        </Badge>
+                      )}
                     </div>
                   </div>
 
@@ -125,3 +141,4 @@ export function AppointmentList({ appointments, title, onEdit, onDelete, isReadO
     </Card>
   );
 }
+

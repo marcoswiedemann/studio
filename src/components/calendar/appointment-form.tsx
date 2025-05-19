@@ -17,17 +17,17 @@ import {
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { CalendarIcon, Users, Phone, Share2 } from "lucide-react";
+import { CalendarIcon, Users, Phone, Share2, CheckSquare } from "lucide-react";
 import { Calendar } from "@/components/ui/calendar";
-import { Checkbox } from "@/components/ui/checkbox"; // Import Checkbox
+import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import type { Appointment, User } from "@/types";
+import type { Appointment } from "@/types";
 import { useAuth } from "@/contexts/auth-context";
 import { USER_ROLES } from "@/lib/constants";
-import React from "react"; // Import React for JSX
+import React from "react";
 
 const appointmentFormSchema = z.object({
   title: z.string().min(1, "Título é obrigatório."),
@@ -38,7 +38,8 @@ const appointmentFormSchema = z.object({
   notes: z.string().optional(),
   contactPerson: z.string().optional(),
   participants: z.string().optional(),
-  isShared: z.boolean().optional(), // Added isShared field
+  isShared: z.boolean().optional(),
+  isCompleted: z.boolean().optional(), // Added isCompleted field
 });
 
 export type AppointmentFormValues = z.infer<typeof appointmentFormSchema>;
@@ -67,6 +68,7 @@ export function AppointmentForm({ onSubmit, initialData, onCancel, isLoading }: 
       contactPerson: initialData?.contactPerson || "",
       participants: initialData?.participants || "",
       isShared: initialData?.isShared || false,
+      isCompleted: initialData?.isCompleted || false,
     },
   });
   
@@ -189,7 +191,7 @@ export function AppointmentForm({ onSubmit, initialData, onCancel, isLoading }: 
             control={form.control}
             name="isShared"
             render={({ field }) => (
-              <FormItem className="flex flex-row items-center space-x-3 space-y-0 rounded-md border p-4 shadow-sm">
+              <FormItem className="flex flex-row items-center space-x-3 space-y-0 rounded-md border p-4 shadow-sm bg-card">
                 <FormControl>
                   <Checkbox
                     checked={field.value}
@@ -210,6 +212,31 @@ export function AppointmentForm({ onSubmit, initialData, onCancel, isLoading }: 
             )}
           />
         )}
+
+        <FormField
+          control={form.control}
+          name="isCompleted"
+          render={({ field }) => (
+            <FormItem className="flex flex-row items-center space-x-3 space-y-0 rounded-md border p-4 shadow-sm bg-card">
+              <FormControl>
+                <Checkbox
+                  checked={field.value}
+                  onCheckedChange={field.onChange}
+                  id="isCompleted"
+                />
+              </FormControl>
+              <div className="space-y-1 leading-none">
+                <FormLabel htmlFor="isCompleted" className="flex items-center cursor-pointer">
+                  <CheckSquare className="h-4 w-4 mr-2 text-muted-foreground" />
+                  Compromisso Realizado?
+                </FormLabel>
+                 <FormDescription>
+                  Marque esta opção se o compromisso já foi concluído.
+                </FormDescription>
+              </div>
+            </FormItem>
+          )}
+        />
 
         <FormField
           control={form.control}

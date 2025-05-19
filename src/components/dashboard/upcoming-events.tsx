@@ -5,10 +5,11 @@ import type { Appointment } from "@/types";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
-import { CalendarClock, MapPin, Phone, Users, Info } from "lucide-react";
+import { CalendarClock, MapPin, Phone, Users, Info, CheckCircle2, XCircle } from "lucide-react";
 import { format, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useAuth } from "@/contexts/auth-context";
+import { cn } from "@/lib/utils";
 
 interface UpcomingEventsProps {
   appointments: Appointment[];
@@ -35,10 +36,23 @@ export function UpcomingEvents({ appointments }: UpcomingEventsProps) {
           <ScrollArea className="h-[300px]">
             <div className="space-y-4">
               {appointments.map((appointment) => (
-                <div key={appointment.id} className="p-4 border rounded-lg bg-card hover:bg-muted/50 transition-colors">
+                <div key={appointment.id} className={cn("p-4 border rounded-lg bg-card hover:bg-muted/50 transition-colors", appointment.isCompleted && "opacity-75")}>
                   <div className="flex justify-between items-start mb-1">
-                    <h3 className="font-semibold text-lg text-primary flex-1 break-words">{appointment.title}</h3>
-                    <Badge variant="outline" className="ml-2 flex-shrink-0">{format(parseISO(appointment.date), "dd/MM/yy", { locale: ptBR })}</Badge>
+                    <h3 className={cn("font-semibold text-lg text-primary flex-1 break-words", appointment.isCompleted && "line-through text-muted-foreground")}>{appointment.title}</h3>
+                    <div className="flex flex-col items-end gap-1 ml-2 flex-shrink-0">
+                        <Badge variant="outline">{format(parseISO(appointment.date), "dd/MM/yy", { locale: ptBR })}</Badge>
+                        {appointment.isCompleted !== undefined && (
+                             appointment.isCompleted ? (
+                                <Badge variant="default" className="bg-green-600 hover:bg-green-700 text-white text-xs">
+                                  <CheckCircle2 className="h-3 w-3 mr-1" /> Realizado
+                                </Badge>
+                              ) : (
+                                <Badge variant="secondary" className="text-xs">
+                                  <XCircle className="h-3 w-3 mr-1" /> Pendente
+                                </Badge>
+                              )
+                        )}
+                    </div>
                   </div>
                   <div className="text-sm text-muted-foreground space-y-1 mt-1">
                     <div className="flex items-center gap-2">
@@ -83,3 +97,4 @@ export function UpcomingEvents({ appointments }: UpcomingEventsProps) {
     </Card>
   );
 }
+
