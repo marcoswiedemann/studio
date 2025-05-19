@@ -1,50 +1,52 @@
 
-// Prisma enum for UserRole will be used directly, so we can simplify this.
-// export type UserRole = 'Admin' | 'Prefeito' | 'Vice-prefeito' | 'Visualizador';
-// We will use Prisma's generated UserRole enum.
-import type { UserRole as PrismaUserRole } from '@prisma/client';
-export type UserRole = PrismaUserRole;
+// Importar o tipo UserRole diretamente do Prisma Client
+import type { UserRole as PrismaUserRole, Appointment as PrismaAppointment, User as PrismaUser } from '@prisma/client';
 
+// Usar o tipo UserRole do Prisma diretamente
+export type UserRole = PrismaUserRole;
 
 export interface User {
   id: string;
   username: string;
   name: string;
-  password?: string; // For client-side forms; will not be sent from API unless explicitly needed for update
+  password?: string;
   role: UserRole;
-  canViewCalendarsOf?: string[]; // User IDs whose calendars this user can view
+  canViewCalendarsOf?: string[];
   createdAt?: string | Date;
   updatedAt?: string | Date;
 }
 
+// Interface para Appointment no frontend, pode ser ligeiramente diferente do Prisma model
+// se precisarmos de campos formatados ou adicionais no cliente.
 export interface Appointment {
   id: string;
   title: string;
-  date: string | Date; // Allow Date for form, string for storage/API
-  time: string; // HH:mm format
-  assignedToId: string; 
-  assignedTo?: User; // For displaying name
-  location?: string;
-  notes?: string;
-  contactPerson?: string;
-  participants?: string;
+  date: string | Date; // Prisma usa DateTime, string para API/forms
+  time: string;
+  assignedToId: string;
+  assignedTo?: User; // Relacionamento opcional no cliente
+  location?: string | null; // Prisma pode ter null
+  notes?: string | null;
+  contactPerson?: string | null;
+  participants?: string | null;
   isShared?: boolean;
   isCompleted?: boolean;
-  createdAt: string | Date; 
-  createdById: string; 
-  createdBy?: User; // For displaying name
-  updatedAt?: string | Date; 
-  updatedById?: string;
-  updatedBy?: User; // For displaying name
+  createdAt: string | Date; // Prisma usa DateTime
+  createdById: string;
+  createdBy?: User; // Relacionamento opcional no cliente
+  updatedAt?: string | Date | null; // Prisma usa DateTime
+  updatedById?: string | null;
+  updatedBy?: User | null; // Relacionamento opcional no cliente
 }
+
 
 export interface Credentials {
   username: string;
-  password?: string; 
+  password?: string;
 }
 
 export interface ThemeColors {
-  background: string; 
+  background: string;
   foreground: string;
   card: string;
   cardForeground: string;
@@ -74,10 +76,10 @@ export interface ThemeColors {
 }
 
 export interface ThemeSettings {
-  id?: string; // Will come from DB
-  userId?: string; // Will come from DB
+  id?: string;
+  userId?: string; // Se as configurações forem por usuário no DB
   appName: string;
   colors: ThemeColors;
-  logoLightModeUrl: string; 
-  logoDarkModeUrl: string;  
+  logoLightModeUrl: string;
+  logoDarkModeUrl: string;
 }
