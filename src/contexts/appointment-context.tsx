@@ -2,17 +2,19 @@
 "use client";
 
 import type { Appointment, User, UserRole } from '@/types';
-import { LOCAL_STORAGE_KEYS, INITIAL_APPOINTMENTS, USER_ROLES } from '@/lib/constants';
-import { useLocalStorage } from '@/hooks/use-local-storage';
+// Removed LOCAL_STORAGE_KEYS and INITIAL_APPOINTMENTS from this import
+import { USER_ROLES } from '@/lib/constants';
+// Removed useLocalStorage import
 import { useAuth } from '@/contexts/auth-context';
-import React, { createContext, useContext, useCallback, useMemo } from 'react';
+import React, { createContext, useContext, useCallback, useMemo, useState, useEffect } from 'react';
 import { format, startOfWeek, endOfWeek, isWithinInterval, parseISO, isSameDay, isAfter, subDays } from 'date-fns';
 
 interface AppointmentContextType {
   appointments: Appointment[];
+  setAppointments: React.Dispatch<React.SetStateAction<Appointment[]>>; // Add setter for eventual API load
   getAppointmentsForUser: (userId: string, role: UserRole, canViewUserIds?: string[], viewDate?: Date, viewType?: 'day' | 'week' | 'month') => Appointment[];
-  addAppointment: (appointmentData: Omit<Appointment, 'id' | 'createdAt' | 'createdBy' | 'updatedAt' | 'updatedBy'>) => void;
-  updateAppointment: (appointmentId: string, updates: Partial<Omit<Appointment, 'id' | 'createdAt' | 'createdBy' | 'updatedAt' | 'updatedBy'>>) => void;
+  addAppointment: (appointmentData: Omit<Appointment, 'id' | 'createdAt' | 'createdBy' | 'updatedAt' | 'updatedBy' | 'assignedToId' | 'createdById' | 'updatedById'> & { assignedToId: string; createdById: string; }) => void;
+  updateAppointment: (appointmentId: string, updates: Partial<Omit<Appointment, 'id' | 'createdAt' | 'createdBy' | 'updatedAt' | 'updatedBy' | 'assignedToId' | 'createdById' | 'updatedById'>> & { updatedById: string; }) => void;
   deleteAppointment: (appointmentId: string) => void;
   getWeeklyAppointmentCount: (user: User | null) => number;
   getUpcomingAppointments: (user: User | null, limit?: number) => Appointment[];
@@ -20,23 +22,14 @@ interface AppointmentContextType {
 
 const AppointmentContext = createContext<AppointmentContextType | undefined>(undefined);
 
-function initializeAppointmentsSeedData(): Appointment[] {
-  return INITIAL_APPOINTMENTS.map((apptSeed, index) => ({
-    ...apptSeed,
-    id: `appt-${Date.now()}-${index}-${Math.random().toString(36).substring(2, 7)}`,
-    // createdAt and createdBy are already in INITIAL_APPOINTMENTS
-    isCompleted: apptSeed.isCompleted || false,
-  }));
-}
+// Removed initializeAppointmentsSeedData function as INITIAL_APPOINTMENTS is no longer used here
 
 export const AppointmentProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const memoizedInitialSeedData = useMemo(() => initializeAppointmentsSeedData(), []);
+  // Initialize appointments with an empty array. Data will be fetched from API later.
+  const [appointments, setAppointments] = useState<Appointment[]>([]);
+  const { user: loggedInUser, allUsers } = useAuth();
 
-  const [appointments, setAppointments] = useLocalStorage<Appointment[]>(
-    LOCAL_STORAGE_KEYS.APPOINTMENTS,
-    memoizedInitialSeedData
-  );
-  const { user: loggedInUser, allUsers } = useAuth(); 
+  // TODO: useEffect to fetch appointments from API when context mounts / user changes
 
   const getAppointmentsForUser = useCallback((
     currentUserId: string,
@@ -47,45 +40,40 @@ export const AppointmentProvider: React.FC<{ children: React.ReactNode }> = ({ c
   ): Appointment[] => {
     let relevantAppointments: Appointment[] = [];
 
-    const mayor = allUsers.find(u => u.role === USER_ROLES.MAYOR);
-    const viceMayor = allUsers.find(u => u.role === USER_ROLES.VICE_MAYOR);
+    const mayor = allUsers.find(u => u.role === USER_ROLES.Prefeito);
+    const viceMayor = allUsers.find(u => u.role === USER_ROLES.Vice_prefeito);
 
-    if (role === USER_ROLES.ADMIN) {
+    if (role === USER_ROLES.Admin) {
       relevantAppointments = appointments;
-    } else if (role === USER_ROLES.MAYOR) {
+    } else if (role === USER_ROLES.Prefeito) {
       relevantAppointments = appointments.filter(appt =>
-        appt.assignedTo === currentUserId ||
-        (appt.isShared && viceMayor && appt.assignedTo === viceMayor.id)
+        appt.assignedToId === currentUserId ||
+        (appt.isShared && viceMayor && appt.assignedToId === viceMayor.id)
       );
-    } else if (role === USER_ROLES.VICE_MAYOR) {
+    } else if (role === USER_ROLES.Vice_prefeito) {
       relevantAppointments = appointments.filter(appt =>
-        appt.assignedTo === currentUserId ||
-        (appt.isShared && mayor && appt.assignedTo === mayor.id)
+        appt.assignedToId === currentUserId ||
+        (appt.isShared && mayor && appt.assignedToId === mayor.id)
       );
-    } else if (role === USER_ROLES.VIEWER) {
+    } else if (role === USER_ROLES.Visualizador) {
         if (!canViewUserIds || canViewUserIds.length === 0) {
             return [];
         }
-        
         const appointmentsSet = new Set<Appointment>();
-
         for (const viewableUserId of canViewUserIds) {
             const viewableUser = allUsers.find(u => u.id === viewableUserId);
             if (!viewableUser) continue;
 
-            // Add appointments directly assigned to the viewableUser
-            appointments.filter(appt => appt.assignedTo === viewableUserId)
+            appointments.filter(appt => appt.assignedToId === viewableUserId)
             .forEach(appt => appointmentsSet.add(appt));
 
-            // If viewableUser is Mayor, add Vice-Mayor's shared appointments
-            if (viewableUser.role === USER_ROLES.MAYOR && viceMayor) {
-            appointments.filter(appt => appt.assignedTo === viceMayor.id && appt.isShared)
+            if (viewableUser.role === USER_ROLES.Prefeito && viceMayor) {
+            appointments.filter(appt => appt.assignedToId === viceMayor.id && appt.isShared)
                 .forEach(appt => appointmentsSet.add(appt));
             }
 
-            // If viewableUser is Vice-Mayor, add Mayor's shared appointments
-            if (viewableUser.role === USER_ROLES.VICE_MAYOR && mayor) {
-            appointments.filter(appt => appt.assignedTo === mayor.id && appt.isShared)
+            if (viewableUser.role === USER_ROLES.Vice_prefeito && mayor) {
+            appointments.filter(appt => appt.assignedToId === mayor.id && appt.isShared)
                 .forEach(appt => appointmentsSet.add(appt));
             }
         }
@@ -98,25 +86,25 @@ export const AppointmentProvider: React.FC<{ children: React.ReactNode }> = ({ c
 
     let dateFilteredAppointments: Appointment[];
     if (viewType === 'day') {
-      dateFilteredAppointments = relevantAppointments.filter(appt => isSameDay(parseISO(appt.date), start));
+      dateFilteredAppointments = relevantAppointments.filter(appt => isSameDay(parseISO(appt.date as string), start));
     } else if (viewType === 'week') {
-       dateFilteredAppointments = relevantAppointments.filter(appt => isWithinInterval(parseISO(appt.date), { start, end }));
+       dateFilteredAppointments = relevantAppointments.filter(appt => isWithinInterval(parseISO(appt.date as string), { start, end }));
     } else { // month view
-     dateFilteredAppointments = relevantAppointments.filter(appt => parseISO(appt.date).getMonth() === viewDate.getMonth() && parseISO(appt.date).getFullYear() === viewDate.getFullYear());
+     dateFilteredAppointments = relevantAppointments.filter(appt => parseISO(appt.date as string).getMonth() === viewDate.getMonth() && parseISO(appt.date as string).getFullYear() === viewDate.getFullYear());
     }
 
     return dateFilteredAppointments.sort((a,b) => {
         if (a.isCompleted !== b.isCompleted) {
             return a.isCompleted ? 1 : -1;
         }
-        const dateComparison = parseISO(a.date).getTime() - parseISO(b.date).getTime();
+        const dateComparison = parseISO(a.date as string).getTime() - parseISO(b.date as string).getTime();
         if (dateComparison !== 0) return dateComparison;
         return a.time.localeCompare(b.time);
     });
 
   }, [appointments, allUsers]);
 
-  const addAppointment = useCallback((appointmentData: Omit<Appointment, 'id' | 'createdAt' | 'createdBy' | 'updatedAt' | 'updatedBy'>) => {
+  const addAppointment = useCallback((appointmentData: Omit<Appointment, 'id' | 'createdAt' | 'updatedAt' | 'updatedBy' | 'assignedTo' | 'createdBy' | 'updatedBy'> & { assignedToId: string; createdById: string; }) => {
     if (!loggedInUser) {
         console.error("Cannot add appointment: no user logged in.");
         return;
@@ -125,34 +113,37 @@ export const AppointmentProvider: React.FC<{ children: React.ReactNode }> = ({ c
       ...appointmentData,
       id: `appt-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
       createdAt: new Date().toISOString(),
-      createdBy: loggedInUser.id,
-      isShared: appointmentData.isShared || false, 
+      // createdById is now passed in appointmentData
+      isShared: appointmentData.isShared || false,
       isCompleted: appointmentData.isCompleted || false,
     };
     setAppointments(prev => [...prev, newAppointment]);
+    // TODO: API call to add appointment to DB
   }, [setAppointments, loggedInUser]);
 
-  const updateAppointment = useCallback((appointmentId: string, updates: Partial<Omit<Appointment, 'id' | 'createdAt' | 'createdBy' | 'updatedAt' | 'updatedBy'>>) => {
+  const updateAppointment = useCallback((appointmentId: string, updates: Partial<Omit<Appointment, 'id' | 'createdAt' | 'createdBy' | 'updatedAt' | 'updatedBy' | 'assignedToId' | 'createdById' | 'updatedBy'>> & { updatedById: string; }) => {
     if (!loggedInUser) {
         console.error("Cannot update appointment: no user logged in.");
         return;
     }
-    setAppointments(prev => prev.map(appt => 
-        appt.id === appointmentId 
-        ? { 
-            ...appt, 
-            ...updates, 
-            isShared: updates.isShared !== undefined ? updates.isShared : appt.isShared, 
+    setAppointments(prev => prev.map(appt =>
+        appt.id === appointmentId
+        ? {
+            ...appt,
+            ...updates,
+            isShared: updates.isShared !== undefined ? updates.isShared : appt.isShared,
             isCompleted: updates.isCompleted !== undefined ? updates.isCompleted : appt.isCompleted,
-            updatedBy: loggedInUser.id,
+            // updatedById is now passed in updates
             updatedAt: new Date().toISOString(),
-          } 
+          }
         : appt
     ));
+    // TODO: API call to update appointment in DB
   }, [setAppointments, loggedInUser]);
 
   const deleteAppointment = useCallback((appointmentId: string) => {
     setAppointments(prev => prev.filter(appt => appt.id !== appointmentId));
+    // TODO: API call to delete appointment from DB
   }, [setAppointments]);
 
   const getWeeklyAppointmentCount = useCallback((currentUser: User | null, targetDate: Date = new Date()): number => {
@@ -165,15 +156,19 @@ export const AppointmentProvider: React.FC<{ children: React.ReactNode }> = ({ c
     if (!currentUser) return [];
     const today = new Date();
 
+    // Get all relevant appointments first (month view for today is a broad enough scope)
+    // For this temporary in-memory version, we fetch all appointments the user can see.
+    // When using an API, this query might be more targeted (e.g., appointments from today onwards).
     const allRelevantAppointments = getAppointmentsForUser(currentUser.id, currentUser.role, currentUser.canViewCalendarsOf || [], today, 'month');
 
+
     return allRelevantAppointments
-      .filter(appt => isAfter(parseISO(appt.date), subDays(today,1))) 
+      .filter(appt => isAfter(parseISO(appt.date as string), subDays(today,1)))
       .sort((a, b) => {
         if (a.isCompleted !== b.isCompleted) {
             return a.isCompleted ? 1 : -1;
         }
-        const dateComparison = parseISO(a.date).getTime() - parseISO(b.date).getTime();
+        const dateComparison = parseISO(a.date as string).getTime() - parseISO(b.date as string).getTime();
         if (dateComparison !== 0) return dateComparison;
         return a.time.localeCompare(b.time);
       })
@@ -183,13 +178,14 @@ export const AppointmentProvider: React.FC<{ children: React.ReactNode }> = ({ c
 
   const contextValue = useMemo(() => ({
     appointments,
+    setAppointments, // Added setter
     getAppointmentsForUser,
     addAppointment,
     updateAppointment,
     deleteAppointment,
     getWeeklyAppointmentCount,
     getUpcomingAppointments,
-  }), [appointments, getAppointmentsForUser, addAppointment, updateAppointment, deleteAppointment, getWeeklyAppointmentCount, getUpcomingAppointments]);
+  }), [appointments, setAppointments, getAppointmentsForUser, addAppointment, updateAppointment, deleteAppointment, getWeeklyAppointmentCount, getUpcomingAppointments]);
 
 
   return (
@@ -206,3 +202,4 @@ export const useAppointments = (): AppointmentContextType => {
   }
   return context;
 };
+
