@@ -9,7 +9,7 @@ import * as z from "zod";
 import { useAuth } from "@/contexts/auth-context";
 import { useSettings } from "@/contexts/settings-context";
 import type { ThemeSettings, ThemeColors } from "@/types";
-import { USER_ROLES, DEFAULT_THEME_SETTINGS, DEFAULT_MAIN_LOGO_URL } from "@/lib/constants";
+import { USER_ROLES, DEFAULT_THEME_SETTINGS, DEFAULT_LOGO_URL } from "@/lib/constants";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
@@ -55,7 +55,8 @@ const themeColorsSchema = z.object({
 
 const settingsFormSchema = z.object({
   colors: themeColorsSchema,
-  mainLogoUrl: z.string().optional(), // Will store Data URI, default remote URL, or be empty
+  logoLightModeUrl: z.string().optional(), 
+  logoDarkModeUrl: z.string().optional(),
 });
 
 type SettingsFormValues = z.infer<typeof settingsFormSchema>;
@@ -72,7 +73,6 @@ const sidebarColorKeys: Array<keyof ThemeColors> = [
   'sidebarAccent', 'sidebarAccentForeground', 'sidebarBorder', 'sidebarRing'
 ];
 
-// Helper function to generate Portuguese labels
 function getPortugueseLabel(key: string): string {
   const translations: { [key: string]: string } = {
     background: "Fundo",
@@ -114,17 +114,21 @@ export default function SettingsPage() {
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
   const [pageLoading, setPageLoading] = useState(true);
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  
+  const fileInputLightRef = useRef<HTMLInputElement>(null);
+  const fileInputDarkRef = useRef<HTMLInputElement>(null);
 
   const form = useForm<SettingsFormValues>({
     resolver: zodResolver(settingsFormSchema),
     defaultValues: {
       colors: themeSettings.colors,
-      mainLogoUrl: themeSettings.mainLogoUrl || '',
+      logoLightModeUrl: themeSettings.logoLightModeUrl || '',
+      logoDarkModeUrl: themeSettings.logoDarkModeUrl || '',
     },
   });
 
-  const [logoPreview, setLogoPreview] = useState<string>(form.getValues("mainLogoUrl") || DEFAULT_MAIN_LOGO_URL);
+  const [logoLightPreview, setLogoLightPreview] = useState<string>(form.getValues("logoLightModeUrl") || DEFAULT_LOGO_URL);
+  const [logoDarkPreview, setLogoDarkPreview] = useState<string>(form.getValues("logoDarkModeUrl") || DEFAULT_LOGO_URL);
 
   useEffect(() => {
     if (user) {
@@ -142,9 +146,11 @@ export default function SettingsPage() {
   useEffect(() => {
     form.reset({
       colors: themeSettings.colors,
-      mainLogoUrl: themeSettings.mainLogoUrl || '',
+      logoLightModeUrl: themeSettings.logoLightModeUrl || '',
+      logoDarkModeUrl: themeSettings.logoDarkModeUrl || '',
     });
-    setLogoPreview(themeSettings.mainLogoUrl || DEFAULT_MAIN_LOGO_URL);
+    setLogoLightPreview(themeSettings.logoLightModeUrl || DEFAULT_LOGO_URL);
+    setLogoDarkPreview(themeSettings.logoDarkModeUrl || DEFAULT_LOGO_URL);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [themeSettings]);
 
@@ -152,7 +158,8 @@ export default function SettingsPage() {
     setIsLoading(true);
     const settingsToSave: ThemeSettings = {
       colors: data.colors,
-      mainLogoUrl: data.mainLogoUrl || DEFAULT_MAIN_LOGO_URL,
+      logoLightModeUrl: data.logoLightModeUrl || DEFAULT_LOGO_URL,
+      logoDarkModeUrl: data.logoDarkModeUrl || DEFAULT_LOGO_URL,
     };
     setThemeSettings(settingsToSave);
     toast({ title: "Configurações Salvas!", description: "As novas configurações foram aplicadas." });
@@ -161,16 +168,17 @@ export default function SettingsPage() {
 
   const handleReset = () => {
     setIsLoading(true);
-    resetContextThemeSettings();
+    resetContextThemeSettings(); // This will also trigger the useEffect above to reset form and previews
+    if (fileInputLightRef.current) fileInputLightRef.current.value = "";
+    if (fileInputDarkRef.current) fileInputDarkRef.current.value = "";
     toast({ title: "Configurações Restauradas!", description: "As configurações padrão foram restauradas." });
-    if (fileInputRef.current) {
-      fileInputRef.current.value = "";
-    }
     setIsLoading(false);
   };
   
-  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>, logoType: 'light' | 'dark') => {
     const file = event.target.files?.[0];
+    const fileInputRef = logoType === 'light' ? fileInputLightRef : fileInputDarkRef;
+
     if (file) {
       if (file.type !== "image/png") {
         toast({ variant: "destructive", title: "Erro de Upload", description: "Por favor, envie um arquivo PNG." });
@@ -185,28 +193,41 @@ export default function SettingsPage() {
       const reader = new FileReader();
       reader.onloadend = () => {
         const dataUrl = reader.result as string;
-        form.setValue("mainLogoUrl", dataUrl, { shouldValidate: true });
-        setLogoPreview(dataUrl);
+        if (logoType === 'light') {
+          form.setValue("logoLightModeUrl", dataUrl, { shouldValidate: true });
+          setLogoLightPreview(dataUrl);
+        } else {
+          form.setValue("logoDarkModeUrl", dataUrl, { shouldValidate: true });
+          setLogoDarkPreview(dataUrl);
+        }
       };
       reader.readAsDataURL(file);
     }
   };
 
-  const handleUseDefaultLogo = () => {
-    form.setValue("mainLogoUrl", DEFAULT_MAIN_LOGO_URL, { shouldValidate: true });
-    setLogoPreview(DEFAULT_MAIN_LOGO_URL);
-    if (fileInputRef.current) {
-      fileInputRef.current.value = "";
+  const handleUseDefaultLogo = (logoType: 'light' | 'dark') => {
+    const fileInputRef = logoType === 'light' ? fileInputLightRef : fileInputDarkRef;
+    if (logoType === 'light') {
+      form.setValue("logoLightModeUrl", DEFAULT_LOGO_URL, { shouldValidate: true });
+      setLogoLightPreview(DEFAULT_LOGO_URL);
+    } else {
+      form.setValue("logoDarkModeUrl", DEFAULT_LOGO_URL, { shouldValidate: true });
+      setLogoDarkPreview(DEFAULT_LOGO_URL);
     }
+    if (fileInputRef.current) fileInputRef.current.value = "";
   };
   
-  const handleClearLogo = () => {
-    form.setValue("mainLogoUrl", "", { shouldValidate: true });
-    setLogoPreview(DEFAULT_MAIN_LOGO_URL); // Preview shows default if current logo is cleared
-    if (fileInputRef.current) {
-      fileInputRef.current.value = "";
+  const handleClearLogo = (logoType: 'light' | 'dark') => {
+    const fileInputRef = logoType === 'light' ? fileInputLightRef : fileInputDarkRef;
+    if (logoType === 'light') {
+      form.setValue("logoLightModeUrl", "", { shouldValidate: true });
+      setLogoLightPreview(DEFAULT_LOGO_URL); // Preview shows default if current logo is cleared
+    } else {
+      form.setValue("logoDarkModeUrl", "", { shouldValidate: true });
+      setLogoDarkPreview(DEFAULT_LOGO_URL);
     }
-    toast({ title: "Logo Removido", description: "O logo customizado foi removido. O sistema usará o logo padrão se nenhum novo for salvo." });
+    if (fileInputRef.current) fileInputRef.current.value = "";
+    toast({ title: "Logo Removido", description: `O logo customizado para tema ${logoType === 'light' ? 'claro' : 'escuro'} foi removido.` });
   };
 
 
@@ -240,23 +261,21 @@ export default function SettingsPage() {
                   if (!value.startsWith('#')) {
                     value = '#' + value;
                   }
-                  // Basic validation for hex characters, allow empty for typing
                   if (/^#?[0-9A-F]*$/i.test(value) && value.length <= 7) {
                     field.onChange(value);
                   } else if (value === '#') {
-                     field.onChange(value); // Allow typing '#'
+                     field.onChange(value); 
                   }
                 }}
                 className="flex-grow"
               />
               <input
                 type="color"
-                value={field.value || '#FFFFFF'} // Default to white if field.value is empty or invalid for color picker
+                value={field.value && /^#([0-9A-Fa-f]{6}|[0-9A-Fa-f]{3})$/.test(field.value) ? field.value : '#FFFFFF'}
                 onChange={(e) => field.onChange(e.target.value.toUpperCase())}
                 className="w-10 h-10 p-0 border-none rounded cursor-pointer flex-shrink-0"
-                style={{ appearance: 'none', WebkitAppearance: 'none', MozAppearance: 'none' }} // Remove default browser styling for color input
+                style={{ appearance: 'none', WebkitAppearance: 'none', MozAppearance: 'none' }}
               />
-               {/* This div acts as a visual color swatch, updated by field.value */}
               <div 
                 className="w-8 h-8 rounded border flex-shrink-0" 
                 style={{ backgroundColor: field.value && /^#([0-9A-Fa-f]{6}|[0-9A-Fa-f]{3})$/.test(field.value) ? field.value : 'transparent' }}
@@ -268,6 +287,70 @@ export default function SettingsPage() {
       )}
     />
   );
+  
+  const renderLogoSection = (logoType: 'light' | 'dark', label: string, description: string, fileInputRef: React.RefObject<HTMLInputElement>, previewSrc: string, dataAiHint: string) => (
+    <section className="mt-6 pt-6 border-t">
+      <h3 className="text-lg font-semibold mb-3 border-b pb-2">{label}</h3>
+      <FormItem>
+        <FormLabel className="flex items-center"><ImageIcon className="mr-2 h-4 w-4" /> Logo (Arquivo PNG)</FormLabel>
+        <FormControl>
+          <Input 
+            type="file"
+            accept="image/png"
+            ref={fileInputRef}
+            onChange={(e) => handleFileChange(e, logoType)}
+            className="cursor-pointer"
+          />
+        </FormControl>
+        <FormDescription>
+          {description} Máximo de 2MB.
+        </FormDescription>
+        <div className="flex gap-2 mt-2">
+          <Button type="button" variant="outline" size="sm" onClick={() => handleUseDefaultLogo(logoType)}>
+            Usar Logo Padrão
+          </Button>
+          <Button type="button" variant="outline" size="sm" onClick={() => handleClearLogo(logoType)} className="text-destructive hover:text-destructive border-destructive/50 hover:border-destructive">
+            <Trash2 className="mr-2 h-4 w-4" /> Remover Logo Atual
+          </Button>
+        </div>
+        <FormMessage />
+      </FormItem>
+      
+      {previewSrc && (
+        <div className={`mt-4 p-4 border rounded-md ${logoType === 'dark' ? 'bg-gray-800' : 'bg-muted/50'} flex justify-center items-center max-w-xs min-h-[80px]`}>
+          <Image
+            src={previewSrc}
+            alt={`Preview do Logo para tema ${logoType === 'light' ? 'claro' : 'escuro'}`}
+            width={120}
+            height={60}
+            style={{ objectFit: 'contain', maxHeight: '60px' }}
+            data-ai-hint={dataAiHint}
+            onError={(e) => {
+                const target = e.target as HTMLImageElement;
+                target.alt = `Falha ao carregar preview do logo (${logoType})`;
+                target.style.display = 'none'; 
+                const parent = target.parentElement;
+                if (parent && !parent.querySelector(`.logo-error-message-${logoType}`)) {
+                    const errorMsg = document.createElement('p');
+                    errorMsg.textContent = 'Falha ao carregar preview. Verifique a URL ou o arquivo.';
+                    errorMsg.className = `text-destructive text-sm logo-error-message-${logoType}`;
+                    parent.appendChild(errorMsg);
+                }
+            }}
+            onLoad={(e) => { 
+                const target = e.target as HTMLImageElement;
+                target.style.display = 'block';
+                 const parent = target.parentElement;
+                 if (parent) {
+                    const errorMsg = parent.querySelector(`.logo-error-message-${logoType}`);
+                    if (errorMsg) parent.removeChild(errorMsg);
+                 }
+            }}
+          />
+        </div>
+      )}
+    </section>
+  );
 
   return (
     <div className="space-y-8">
@@ -278,7 +361,7 @@ export default function SettingsPage() {
             <div>
               <CardTitle className="text-2xl">Configurações de Aparência</CardTitle>
               <CardDescription>
-                Personalize as cores (formato hexadecimal, ex: #FF0000) e o logo (PNG) do sistema.
+                Personalize as cores (formato hexadecimal) e os logos (PNG) do sistema.
               </CardDescription>
             </div>
           </div>
@@ -299,68 +382,25 @@ export default function SettingsPage() {
                   {sidebarColorKeys.map(key => renderColorInput(key, getPortugueseLabel(key)))}
                 </div>
               </section>
+              
+              {renderLogoSection(
+                'light', 
+                'Logo para Tema Claro', 
+                'Idealmente um logo escuro para fundos claros.', 
+                fileInputLightRef, 
+                logoLightPreview,
+                "logo light"
+              )}
+              
+              {renderLogoSection(
+                'dark', 
+                'Logo para Tema Escuro', 
+                'Idealmente um logo claro para fundos escuros.', 
+                fileInputDarkRef, 
+                logoDarkPreview,
+                "logo dark"
+              )}
 
-              <section>
-                <h3 className="text-lg font-semibold mb-3 pt-4 border-b pb-2">Logo do Sistema</h3>
-                 <FormItem>
-                    <FormLabel className="flex items-center"><ImageIcon className="mr-2 h-4 w-4" /> Logo Principal (Arquivo PNG)</FormLabel>
-                    <FormControl>
-                      <Input 
-                        type="file"
-                        accept="image/png"
-                        ref={fileInputRef}
-                        onChange={handleFileChange}
-                        className="cursor-pointer"
-                      />
-                    </FormControl>
-                    <FormDescription>
-                      Envie um arquivo PNG para o logo. Máximo de 2MB.
-                    </FormDescription>
-                     <div className="flex gap-2 mt-2">
-                        <Button type="button" variant="outline" size="sm" onClick={handleUseDefaultLogo}>
-                            Usar Logo Padrão
-                        </Button>
-                        <Button type="button" variant="outline" size="sm" onClick={handleClearLogo} className="text-destructive hover:text-destructive border-destructive/50 hover:border-destructive">
-                            <Trash2 className="mr-2 h-4 w-4" /> Remover Logo Atual
-                        </Button>
-                    </div>
-                    <FormMessage />
-                  </FormItem>
-                
-                {logoPreview && (
-                  <div className="mt-4 p-4 border rounded-md bg-muted/50 flex justify-center items-center max-w-xs min-h-[80px]">
-                    <Image
-                        src={logoPreview}
-                        alt="Preview do Logo"
-                        width={120}
-                        height={60}
-                        style={{ objectFit: 'contain', maxHeight: '60px' }}
-                        data-ai-hint="logo preview"
-                        onError={(e) => {
-                            const target = e.target as HTMLImageElement;
-                            target.alt = "Falha ao carregar preview do logo";
-                            target.style.display = 'none'; // Hide broken image icon
-                            const parent = target.parentElement;
-                            if (parent && !parent.querySelector('.logo-error-message')) {
-                                const errorMsg = document.createElement('p');
-                                errorMsg.textContent = 'Falha ao carregar preview do logo. Verifique a URL ou o arquivo enviado.';
-                                errorMsg.className = 'text-destructive text-sm logo-error-message';
-                                parent.appendChild(errorMsg);
-                            }
-                        }}
-                        onLoad={(e) => { // Clear error message on successful load
-                            const target = e.target as HTMLImageElement;
-                            target.style.display = 'block';
-                             const parent = target.parentElement;
-                             if (parent) {
-                                const errorMsg = parent.querySelector('.logo-error-message');
-                                if (errorMsg) parent.removeChild(errorMsg);
-                             }
-                        }}
-                    />
-                  </div>
-                )}
-              </section>
             </CardContent>
             <CardFooter className="border-t pt-6 flex flex-col sm:flex-row justify-end gap-2">
               <Button type="button" variant="outline" onClick={handleReset} disabled={isLoading} className="w-full sm:w-auto">
@@ -378,5 +418,3 @@ export default function SettingsPage() {
     </div>
   );
 }
-
-    

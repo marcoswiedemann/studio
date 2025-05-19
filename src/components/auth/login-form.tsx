@@ -16,7 +16,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAuth } from "@/contexts/auth-context";
-import { useSettings } from "@/contexts/settings-context"; // Add this
+import { useSettings } from "@/contexts/settings-context"; 
 import { useRouter } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
 import { useState } from "react";
@@ -29,11 +29,10 @@ const formSchema = z.object({
 
 export function LoginForm() {
   const { login } = useAuth();
-  const { themeSettings } = useSettings(); // Get themeSettings
+  const { themeSettings } = useSettings(); 
   const router = useRouter();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
-  // const logoUrl = "https://pmsantoangelo.abase.com.br/site/Brasoes/120/cabecalho.png"; // Remove this
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -63,16 +62,29 @@ export function LoginForm() {
     <div className="flex items-center justify-center min-h-screen bg-background p-4">
       <Card className="w-full max-w-md shadow-xl">
         <CardHeader className="text-center">
-          <div className="flex justify-center items-center mb-4 h-[60px]"> {/* Added fixed height for container */}
-            {themeSettings.mainLogoUrl && (
+          <div className="flex justify-center items-center mb-4 h-[60px]">
+            {themeSettings.logoLightModeUrl && (
               <Image
-                src={themeSettings.mainLogoUrl} // Use themeSettings.mainLogoUrl
-                alt="Logo Prefeitura Santo Ângelo"
+                src={themeSettings.logoLightModeUrl} 
+                alt="Logo Prefeitura (Tema Claro)"
                 width={120}
                 height={60}
-                style={{ objectFit: 'contain' }} // Ensure logo scales nicely
+                style={{ objectFit: 'contain' }} 
                 priority
-                data-ai-hint="logo prefeitura"
+                data-ai-hint="logo prefeitura light"
+                className="block dark:hidden"
+              />
+            )}
+            {themeSettings.logoDarkModeUrl && (
+              <Image
+                src={themeSettings.logoDarkModeUrl} 
+                alt="Logo Prefeitura (Tema Escuro)"
+                width={120}
+                height={60}
+                style={{ objectFit: 'contain' }} 
+                priority
+                data-ai-hint="logo prefeitura dark"
+                className="hidden dark:block"
               />
             )}
           </div>

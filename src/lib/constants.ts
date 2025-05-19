@@ -15,40 +15,40 @@ export const LOCAL_STORAGE_KEYS = {
   THEME_SETTINGS: 'agendaGovThemeSettings',
 };
 
-export const DEFAULT_MAIN_LOGO_URL = "https://pmsantoangelo.abase.com.br/site/Brasoes/120/cabecalho.png";
+export const DEFAULT_LOGO_URL = "https://pmsantoangelo.abase.com.br/site/Brasoes/120/cabecalho.png";
 
 export const DEFAULT_THEME_SETTINGS: ThemeSettings = {
   colors: {
-    background: "#ECEFF1", // hsl(206 23% 94%)
-    foreground: "#383A3D", // hsl(210 10% 23%)
-    card: "#FFFFFF",       // hsl(0 0% 100%)
-    cardForeground: "#383A3D", // hsl(210 10% 23%)
-    popover: "#FFFFFF",      // hsl(0 0% 100%)
-    popoverForeground: "#383A3D", // hsl(210 10% 23%)
-    primary: "#3F51B5",      // hsl(231 48% 48%)
-    primaryForeground: "#FFFFFF", // hsl(0 0% 100%)
-    secondary: "#E0E5E9",    // hsl(210 16% 90%)
-    secondaryForeground: "#383A3D", // hsl(210 10% 23%)
-    muted: "#E0E5E9",        // hsl(210 16% 90%)
-    mutedForeground: "#696E75", // hsl(210 10% 45%)
-    accent: "#9575CD",       // hsl(261 44% 70%)
-    accentForeground: "#FFFFFF", // hsl(0 0% 100%)
-    destructive: "#F44336",  // hsl(0 84.2% 60.2%)
-    destructiveForeground: "#FAFAFA", // hsl(0 0% 98%)
-    border: "#D3D7DB",       // hsl(210 10% 85%)
-    input: "#D3D7DB",        // hsl(210 10% 85%)
-    ring: "#3F51B5",         // hsl(231 48% 48%)
-    // Sidebar defaults (converted to hex)
-    sidebarBackground: "#2B303B",       // hsl(220 15% 20%)
-    sidebarForeground: "#F9FAFC",       // hsl(210 40% 98%)
-    sidebarPrimary: "#3F51B5",          // hsl(231 48% 48%)
-    sidebarPrimaryForeground: "#FFFFFF", // hsl(0 0% 100%)
-    sidebarAccent: "#3C4352",           // hsl(220 15% 28%)
-    sidebarAccentForeground: "#F9FAFC",  // hsl(210 40% 98%)
-    sidebarBorder: "#1F2329",           // hsl(220 15% 15%)
-    sidebarRing: "#3F51B5",             // hsl(231 48% 48%)
+    background: "#ECEFF1", 
+    foreground: "#383A3D", 
+    card: "#FFFFFF",       
+    cardForeground: "#383A3D", 
+    popover: "#FFFFFF",      
+    popoverForeground: "#383A3D", 
+    primary: "#3F51B5",      
+    primaryForeground: "#FFFFFF", 
+    secondary: "#E0E5E9",    
+    secondaryForeground: "#383A3D", 
+    muted: "#E0E5E9",        
+    mutedForeground: "#696E75", 
+    accent: "#9575CD",       
+    accentForeground: "#FFFFFF", 
+    destructive: "#F44336",  
+    destructiveForeground: "#FAFAFA", 
+    border: "#D3D7DB",       
+    input: "#D3D7DB",        
+    ring: "#3F51B5",         
+    sidebarBackground: "#2B303B",       
+    sidebarForeground: "#F9FAFC",       
+    sidebarPrimary: "#3F51B5",          
+    sidebarPrimaryForeground: "#FFFFFF", 
+    sidebarAccent: "#3C4352",           
+    sidebarAccentForeground: "#F9FAFC",  
+    sidebarBorder: "#1F2329",           
+    sidebarRing: "#3F51B5",             
   },
-  mainLogoUrl: DEFAULT_MAIN_LOGO_URL,
+  logoLightModeUrl: DEFAULT_LOGO_URL,
+  logoDarkModeUrl: DEFAULT_LOGO_URL, // Default to same logo, admin can change
 };
 
 
@@ -123,3 +123,4 @@ export const INITIAL_APPOINTMENTS: Omit<Appointment, 'id' | 'createdAt'>[] = [
     isShared: false,
   }
 ];
+

@@ -29,7 +29,7 @@ export interface Credentials {
 }
 
 export interface ThemeColors {
-  background: string; // HSL string e.g., "206 23% 94%"
+  background: string; 
   foreground: string;
   card: string;
   cardForeground: string;
@@ -61,5 +61,7 @@ export interface ThemeColors {
 
 export interface ThemeSettings {
   colors: ThemeColors;
-  mainLogoUrl: string;
+  logoLightModeUrl: string; // For light backgrounds (typically a darker logo)
+  logoDarkModeUrl: string;  // For dark backgrounds (typically a lighter logo)
 }
+

@@ -2,8 +2,8 @@
 "use client";
 
 import { useAppointments } from "@/contexts/appointment-context";
-import { useAuth } from "@/contexts/auth-context"; // To get allUsers for names
-import { useSettings } from "@/contexts/settings-context"; // Add this
+import { useAuth } from "@/contexts/auth-context"; 
+import { useSettings } from "@/contexts/settings-context"; 
 import { Appointment } from "@/types";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -66,12 +66,10 @@ function PublicAppointmentItem({ appointment, getUserName }: { appointment: Appo
   );
 }
 
-// const logoUrl = "https://pmsantoangelo.abase.com.br/site/Brasoes/120/cabecalho.png"; // Remove this
-
 export default function PublicAgendaPage() {
   const { appointments } = useAppointments();
   const { allUsers, loading: authLoading } = useAuth();
-  const { themeSettings } = useSettings(); // Get themeSettings
+  const { themeSettings } = useSettings(); 
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -107,15 +105,28 @@ export default function PublicAgendaPage() {
     <div className="min-h-screen bg-background text-foreground">
       <header className="py-6 bg-card border-b border-border">
         <div className="container mx-auto px-4 flex flex-col sm:flex-row items-center gap-4">
-          {themeSettings.mainLogoUrl && (
+          {themeSettings.logoLightModeUrl && (
             <Image
-              src={themeSettings.mainLogoUrl} // Use themeSettings.mainLogoUrl
-              alt="Logo Prefeitura Santo Ângelo"
+              src={themeSettings.logoLightModeUrl}
+              alt="Logo Prefeitura (Tema Claro)"
               width={150} 
               height={75}
-              style={{ objectFit: 'contain' }} // Ensure logo scales nicely
+              style={{ objectFit: 'contain' }} 
               priority
-              data-ai-hint="logo prefeitura"
+              data-ai-hint="logo prefeitura light"
+              className="block dark:hidden"
+            />
+          )}
+          {themeSettings.logoDarkModeUrl && (
+             <Image
+              src={themeSettings.logoDarkModeUrl}
+              alt="Logo Prefeitura (Tema Escuro)"
+              width={150} 
+              height={75}
+              style={{ objectFit: 'contain' }} 
+              priority
+              data-ai-hint="logo prefeitura dark"
+              className="hidden dark:block"
             />
           )}
           <div className="text-center sm:text-left">
