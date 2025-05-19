@@ -1,7 +1,7 @@
 
 import type { UserRole } from "@/types";
 import type { LucideIcon } from "lucide-react";
-import { LayoutDashboard, CalendarDays, UserCircle, Users, Lightbulb, Settings, Eye } from "lucide-react";
+import { LayoutDashboard, CalendarDays, UserCircle, Users, Settings, Eye } from "lucide-react";
 import { USER_ROLES } from "@/lib/constants";
 
 
@@ -26,12 +26,6 @@ export const navItems: NavItem[] = [
     roles: [USER_ROLES.ADMIN, USER_ROLES.MAYOR, USER_ROLES.VICE_MAYOR, USER_ROLES.VIEWER],
   },
   {
-    title: "Sugestões IA",
-    href: "/suggestions",
-    icon: Lightbulb,
-    roles: [USER_ROLES.ADMIN, USER_ROLES.MAYOR, USER_ROLES.VICE_MAYOR], // Not for Viewer
-  },
-  {
     title: "Perfil",
     href: "/profile",
     icon: UserCircle,
@@ -44,3 +38,4 @@ export const navItems: NavItem[] = [
     roles: [USER_ROLES.ADMIN],
   },
 ];
+
