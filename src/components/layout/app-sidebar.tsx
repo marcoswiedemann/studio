@@ -41,14 +41,14 @@ export function AppSidebar() {
   return (
     <Sidebar collapsible="icon" className="border-r">
       <SidebarHeader className="p-4">
-        <Link href="/dashboard" className="flex items-center gap-2 group-data-[collapsible=icon]:justify-center">
+        <Link href="/dashboard" className="flex flex-col items-center gap-1 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:gap-0">
           <div className="group-data-[collapsible=icon]:w-8 group-data-[collapsible=icon]:h-8 w-auto h-10 relative">
             {themeSettings.logoLightModeUrl && (
               <Image
                 src={themeSettings.logoLightModeUrl} 
-                alt="Logo (Tema Claro)"
+                alt={`Logo ${themeSettings.appName} (Tema Claro)`}
                 fill
-                sizes="(max-width: 768px) 32px, 100px" 
+                sizes="(max-width: 768px) 32px, 40px" 
                 style={{ objectFit: 'contain' }}
                 priority
                 data-ai-hint="logo light"
@@ -58,9 +58,9 @@ export function AppSidebar() {
              {themeSettings.logoDarkModeUrl && (
               <Image
                 src={themeSettings.logoDarkModeUrl} 
-                alt="Logo (Tema Escuro)"
+                alt={`Logo ${themeSettings.appName} (Tema Escuro)`}
                 fill
-                sizes="(max-width: 768px) 32px, 100px" 
+                sizes="(max-width: 768px) 32px, 40px" 
                 style={{ objectFit: 'contain' }}
                 priority
                 data-ai-hint="logo dark"
@@ -68,7 +68,7 @@ export function AppSidebar() {
               />
             )}
           </div>
-          <span className="font-semibold text-lg text-primary group-data-[collapsible=icon]:hidden ml-2">{themeSettings.appName}</span>
+          <span className="font-semibold text-sm text-primary group-data-[collapsible=icon]:hidden">{themeSettings.appName}</span>
         </Link>
       </SidebarHeader>
       <SidebarContent>
