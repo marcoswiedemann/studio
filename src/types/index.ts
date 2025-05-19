@@ -21,7 +21,10 @@ export interface Appointment {
   participants?: string;
   isShared?: boolean;
   isCompleted?: boolean; // Added for appointment status
-  createdAt: string; // ISO string
+  createdAt: string; // ISO string for creation date
+  createdBy: string; // User ID of the creator
+  updatedAt?: string; // ISO string for last update date
+  updatedBy?: string; // User ID of the last updater
 }
 
 export interface Credentials {
@@ -66,4 +69,3 @@ export interface ThemeSettings {
   logoLightModeUrl: string; 
   logoDarkModeUrl: string;  
 }
-
