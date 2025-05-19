@@ -63,28 +63,30 @@ export const AppointmentProvider: React.FC<{ children: React.ReactNode }> = ({ c
       );
     } else if (role === USER_ROLES.VIEWER) {
       if (canViewUserIds && canViewUserIds.length > 0) {
-        // Viewers see appointments of users they can view, including shared ones visible to those users
-        const viewableAppointments = new Set<string>();
+        const viewableAppointmentsSet = new Set<string>();
         
         canViewUserIds.forEach(viewableUserId => {
-          const targetUser = allUsers.find(u => u.id === viewableUserId);
-          if (!targetUser) return;
+          // const targetUser = allUsers.find(u => u.id === viewableUserId);
+          // if (!targetUser) return;
 
           appointments.forEach(appt => {
+            // Viewer sees appointments directly assigned to users in their canViewUserIds list
             if (appt.assignedTo === viewableUserId) {
-              viewableAppointments.add(appt.id);
+              viewableAppointmentsSet.add(appt.id);
             }
-            // If viewer can see Mayor, and Vice shared with Mayor
-            if (targetUser.role === USER_ROLES.MAYOR && appt.isShared && viceMayor && appt.assignedTo === viceMayor.id) {
-              viewableAppointments.add(appt.id);
-            }
-            // If viewer can see Vice, and Mayor shared with Vice
-            if (targetUser.role === USER_ROLES.VICE_MAYOR && appt.isShared && mayor && appt.assignedTo === mayor.id) {
-              viewableAppointments.add(appt.id);
-            }
+            
+            // Temporarily simplified: Original shared logic removed for debugging.
+            // // If viewer can see Mayor, and Vice shared with Mayor
+            // if (targetUser.role === USER_ROLES.MAYOR && appt.isShared && viceMayor && appt.assignedTo === viceMayor.id) {
+            //   viewableAppointmentsSet.add(appt.id);
+            // }
+            // // If viewer can see Vice, and Mayor shared with Vice
+            // if (targetUser.role === USER_ROLES.VICE_MAYOR && appt.isShared && mayor && appt.assignedTo === mayor.id) {
+            //   viewableAppointmentsSet.add(appt.id);
+            // }
           });
         });
-        filteredAppointments = appointments.filter(appt => viewableAppointments.has(appt.id));
+        filteredAppointments = appointments.filter(appt => viewableAppointmentsSet.has(appt.id));
 
       } else {
         return []; // Viewer with no assigned calendars sees nothing
@@ -128,30 +130,23 @@ export const AppointmentProvider: React.FC<{ children: React.ReactNode }> = ({ c
 
   const getWeeklyAppointmentCount = useCallback((currentUser: User | null, targetDate: Date = new Date()): number => {
     if (!currentUser) return 0;
-
-    const start = startOfWeek(targetDate, { weekStartsOn: 1 });
-    const end = endOfWeek(targetDate, { weekStartsOn: 1 });
     
-    let userAppointments = getAppointmentsForUser(currentUser.id, currentUser.role, currentUser.canViewCalendarsOf, targetDate, 'week');
-    // The getAppointmentsForUser already handles sharing logic based on role
+    let userAppointments = getAppointmentsForUser(currentUser.id, currentUser.role, currentUser.canViewCalendarsOf || [], targetDate, 'week');
     
-    return userAppointments.filter(appt => isWithinInterval(parseISO(appt.date), { start, end })).length;
-  }, [appointments, getAppointmentsForUser]); // Added getAppointmentsForUser to dependencies
+    return userAppointments.length; // getAppointmentsForUser already filters by week if viewType is 'week'
+  }, [getAppointmentsForUser]); 
 
   const getUpcomingAppointments = useCallback((currentUser: User | null, limit: number = 5): Appointment[] => {
     if (!currentUser) return [];
     const today = new Date();
     
-    // Use getAppointmentsForUser to get base list, then filter for upcoming
-    // This reuses the complex filtering logic including sharing and viewer permissions
-    // We pass 'month' as viewType to get a broader set initially, then filter by date
-    const allRelevantAppointments = getAppointmentsForUser(currentUser.id, currentUser.role, currentUser.canViewCalendarsOf, today, 'month');
+    const allRelevantAppointments = getAppointmentsForUser(currentUser.id, currentUser.role, currentUser.canViewCalendarsOf || [], today, 'month');
     
     return allRelevantAppointments
-      .filter(appt => isAfter(parseISO(appt.date), subWeeks(today,1))) // Keep previous week's for context if needed, or change to isAfter(parseISO(appt.date), subDays(today,1)) for strictly future
+      .filter(appt => isAfter(parseISO(appt.date), subDays(today,1))) // Only future or today's appointments
       .sort((a, b) => parseISO(a.date).getTime() - parseISO(b.date).getTime() || a.time.localeCompare(b.time))
       .slice(0, limit);
-  }, [appointments, getAppointmentsForUser]); // Added getAppointmentsForUser to dependencies
+  }, [getAppointmentsForUser]);
 
 
   const contextValue = useMemo(() => ({
