@@ -42,7 +42,7 @@ export type AppointmentFormValues = z.infer<typeof appointmentFormSchema>;
 
 interface AppointmentFormProps {
   onSubmit: (values: AppointmentFormValues) => void;
-  initialData?: Partial<Appointment>;
+  initialData?: Partial<Appointment> & { date?: Date }; // Ensure initialData.date is a Date object
   onCancel?: () => void;
   isLoading?: boolean;
 }
@@ -56,7 +56,8 @@ export function AppointmentForm({ onSubmit, initialData, onCancel, isLoading }: 
     resolver: zodResolver(appointmentFormSchema),
     defaultValues: {
       title: initialData?.title || "",
-      date: initialData?.date ? new Date(initialData.date + 'T00:00:00') : new Date(), // Ensure correct date parsing
+      // If initialData.date is provided (and it should be a Date object from CalendarPage), use it. Otherwise, default to new Date().
+      date: initialData?.date || new Date(),
       time: initialData?.time || "09:00",
       assignedTo: defaultAssignedTo,
       location: initialData?.location || "",
