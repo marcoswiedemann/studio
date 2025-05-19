@@ -3,10 +3,9 @@
 
 import type { Appointment } from "@/types";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-// ScrollArea import removed
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { CalendarClock, MapPin, Edit3, Trash2, User as UserIcon, Phone, Users as UsersIcon, Info, CheckCircle2, XCircle } from "lucide-react";
+import { CalendarClock, MapPin, Edit3, Trash2, User as UserIcon, Phone, Users as UsersIcon, Info, CheckCircle2, XCircle, UserCircle, Edit2 } from "lucide-react";
 import { format, parseISO, isSameDay as dateFnsIsSameDay } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useAuth } from "@/contexts/auth-context";
@@ -24,7 +23,8 @@ interface AppointmentListProps {
 export function AppointmentList({ appointments, title, onEdit, onDelete, isReadOnly = false }: AppointmentListProps) {
   const { user, allUsers } = useAuth();
 
-  const getUserName = (userId: string) => {
+  const getUserName = (userId: string | undefined) => {
+    if (!userId) return 'Sistema';
     const u = allUsers.find(u => u.id === userId);
     return u ? u.name : 'Desconhecido';
   };
@@ -45,7 +45,6 @@ export function AppointmentList({ appointments, title, onEdit, onDelete, isReadO
         {appointments.length === 0 ? (
           <p className="text-muted-foreground text-center py-8">Nenhum compromisso encontrado.</p>
         ) : (
-          // ScrollArea component and its fixed height class removed
           <div className="space-y-4">
             {appointments.map((appointment) => (
               <div 
@@ -116,6 +115,19 @@ export function AppointmentList({ appointments, title, onEdit, onDelete, isReadO
                       <p className="whitespace-pre-line"><strong>Obs:</strong> {appointment.notes}</p>
                   </div>
                 )}
+
+                <div className="text-xs text-muted-foreground/80 mt-3 pt-2 border-t border-dashed space-y-1">
+                  <div className="flex items-center gap-1.5">
+                    <UserCircle className="h-3.5 w-3.5 flex-shrink-0" />
+                    <span>Criado por: {getUserName(appointment.createdBy)} em {format(parseISO(appointment.createdAt), "dd/MM/yy 'às' HH:mm", { locale: ptBR })}</span>
+                  </div>
+                  {appointment.updatedBy && appointment.updatedAt && (
+                    <div className="flex items-center gap-1.5">
+                      <Edit2 className="h-3.5 w-3.5 flex-shrink-0" />
+                      <span>Última atualização: {getUserName(appointment.updatedBy)} em {format(parseISO(appointment.updatedAt), "dd/MM/yy 'às' HH:mm", { locale: ptBR })}</span>
+                    </div>
+                  )}
+                </div>
 
                 {canModify(appointment) && (
                   <div 

@@ -5,7 +5,7 @@ import type { Appointment } from "@/types";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
-import { CalendarClock, MapPin, Phone, Users, Info, CheckCircle2, XCircle } from "lucide-react";
+import { CalendarClock, MapPin, Phone, Users, Info, CheckCircle2, XCircle, UserCircle as CreatedUserIcon, Edit2 as UpdatedUserIcon } from "lucide-react";
 import { format, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useAuth } from "@/contexts/auth-context";
@@ -18,7 +18,8 @@ interface UpcomingEventsProps {
 export function UpcomingEvents({ appointments }: UpcomingEventsProps) {
   const { allUsers } = useAuth();
 
-  const getUserName = (userId: string) => {
+  const getUserName = (userId: string | undefined) => {
+    if (!userId) return 'Sistema';
     const user = allUsers.find(u => u.id === userId);
     return user ? user.name : 'Desconhecido';
   };
@@ -88,6 +89,18 @@ export function UpcomingEvents({ appointments }: UpcomingEventsProps) {
                         <p className="whitespace-pre-line"><strong>Obs:</strong> {appointment.notes}</p>
                     </div>
                   )}
+                  <div className="text-xs text-muted-foreground/80 mt-3 pt-2 border-t border-dashed space-y-1">
+                    <div className="flex items-center gap-1.5">
+                        <CreatedUserIcon className="h-3.5 w-3.5 flex-shrink-0" />
+                        <span>Criado por: {getUserName(appointment.createdBy)} em {format(parseISO(appointment.createdAt), "dd/MM/yy 'às' HH:mm", { locale: ptBR })}</span>
+                    </div>
+                    {appointment.updatedBy && appointment.updatedAt && (
+                        <div className="flex items-center gap-1.5">
+                        <UpdatedUserIcon className="h-3.5 w-3.5 flex-shrink-0" />
+                        <span>Última atualização: {getUserName(appointment.updatedBy)} em {format(parseISO(appointment.updatedAt), "dd/MM/yy 'às' HH:mm", { locale: ptBR })}</span>
+                        </div>
+                    )}
+                  </div>
                 </div>
               ))}
             </div>

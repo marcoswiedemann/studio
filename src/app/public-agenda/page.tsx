@@ -8,7 +8,7 @@ import { Appointment, UserRole as AppUserRole } from "@/types"; // Renamed UserR
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
-import { CalendarClock, MapPin, User as UserIcon, Phone, Users as UsersIcon, Info, CheckCircle2, XCircle } from "lucide-react";
+import { CalendarClock, MapPin, User as UserIcon, Phone, Users as UsersIcon, Info, CheckCircle2, XCircle, UserCircle as CreatedUserIcon, Edit2 as UpdatedUserIcon } from "lucide-react";
 import Image from "next/image";
 import { format, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -17,7 +17,7 @@ import { Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { USER_ROLES } from "@/lib/constants"; // Ensure USER_ROLES is imported for comparison
 
-function PublicAppointmentItem({ appointment, getUserName }: { appointment: Appointment; getUserName: (userId: string) => string }) {
+function PublicAppointmentItem({ appointment, getUserName }: { appointment: Appointment; getUserName: (userId: string | undefined) => string }) {
   return (
     <div className={cn("p-4 border rounded-lg bg-card shadow-sm hover:shadow-md transition-all duration-150", appointment.isCompleted && "opacity-75")}> {/* Added shadow-sm hover:shadow-md */}
       <div className="flex justify-between items-start mb-2">
@@ -79,6 +79,18 @@ function PublicAppointmentItem({ appointment, getUserName }: { appointment: Appo
             <p className="whitespace-pre-line"><strong>Obs:</strong> {appointment.notes}</p>
         </div>
       )}
+      <div className="text-xs text-muted-foreground/80 mt-3 pt-2 border-t border-dashed space-y-1">
+        <div className="flex items-center gap-1.5">
+            <CreatedUserIcon className="h-3.5 w-3.5 flex-shrink-0" />
+            <span>Criado por: {getUserName(appointment.createdBy)} em {format(parseISO(appointment.createdAt), "dd/MM/yy 'às' HH:mm", { locale: ptBR })}</span>
+        </div>
+        {appointment.updatedBy && appointment.updatedAt && (
+            <div className="flex items-center gap-1.5">
+            <UpdatedUserIcon className="h-3.5 w-3.5 flex-shrink-0" />
+            <span>Última atualização: {getUserName(appointment.updatedBy)} em {format(parseISO(appointment.updatedAt), "dd/MM/yy 'às' HH:mm", { locale: ptBR })}</span>
+            </div>
+        )}
+      </div>
     </div>
   );
 }
@@ -95,7 +107,8 @@ export default function PublicAgendaPage() {
     }
   }, [authLoading]);
 
-  const getUserName = (userId: string) => {
+  const getUserName = (userId: string | undefined) => {
+    if (!userId) return 'Sistema';
     const user = allUsers.find(u => u.id === userId);
     return user ? user.name : 'Não disponível';
   };
@@ -122,6 +135,7 @@ export default function PublicAgendaPage() {
 
   const publicAppointmentsToDisplay = sortedAppointments.filter(appt => {
     const assignedUser = allUsers.find(u => u.id === appt.assignedTo);
+    // Display if assigned to Mayor or Vice-Mayor AND isShared is true
     return (assignedUser?.role === USER_ROLES.MAYOR || assignedUser?.role === USER_ROLES.VICE_MAYOR) && appt.isShared;
   });
 
