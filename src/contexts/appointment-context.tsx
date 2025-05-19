@@ -6,7 +6,7 @@ import { LOCAL_STORAGE_KEYS, INITIAL_APPOINTMENTS, USER_ROLES } from '@/lib/cons
 import { useLocalStorage } from '@/hooks/use-local-storage';
 import { useAuth } from '@/contexts/auth-context';
 import React, { createContext, useContext, useCallback, useMemo } from 'react';
-import { format, startOfWeek, endOfWeek, isWithinInterval, parseISO, addWeeks, subWeeks, isSameDay, isAfter, isBefore } from 'date-fns';
+import { format, startOfWeek, endOfWeek, isWithinInterval, parseISO, addWeeks, subWeeks, isSameDay, isAfter, isBefore, subDays } from 'date-fns';
 
 interface AppointmentContextType {
   appointments: Appointment[];
@@ -38,10 +38,10 @@ export const AppointmentProvider: React.FC<{ children: React.ReactNode }> = ({ c
   const { user: loggedInUser, allUsers } = useAuth(); // Get allUsers for sharing logic
 
   const getAppointmentsForUser = useCallback((
-    currentUserId: string, 
-    role: UserRole, 
-    canViewUserIds: string[] = [], 
-    viewDate: Date = new Date(), 
+    currentUserId: string,
+    role: UserRole,
+    canViewUserIds: string[] = [],
+    viewDate: Date = new Date(),
     viewType: 'day' | 'week' | 'month' = 'month'
   ): Appointment[] => {
     let filteredAppointments: Appointment[] = [];
@@ -52,42 +52,19 @@ export const AppointmentProvider: React.FC<{ children: React.ReactNode }> = ({ c
     if (role === USER_ROLES.ADMIN) {
       filteredAppointments = appointments;
     } else if (role === USER_ROLES.MAYOR) {
-      filteredAppointments = appointments.filter(appt => 
-        appt.assignedTo === currentUserId || 
+      filteredAppointments = appointments.filter(appt =>
+        appt.assignedTo === currentUserId ||
         (appt.isShared && viceMayor && appt.assignedTo === viceMayor.id)
       );
     } else if (role === USER_ROLES.VICE_MAYOR) {
-      filteredAppointments = appointments.filter(appt => 
+      filteredAppointments = appointments.filter(appt =>
         appt.assignedTo === currentUserId ||
         (appt.isShared && mayor && appt.assignedTo === mayor.id)
       );
     } else if (role === USER_ROLES.VIEWER) {
       if (canViewUserIds && canViewUserIds.length > 0) {
-        const viewableAppointmentsSet = new Set<string>();
-        
-        canViewUserIds.forEach(viewableUserId => {
-          // const targetUser = allUsers.find(u => u.id === viewableUserId);
-          // if (!targetUser) return;
-
-          appointments.forEach(appt => {
-            // Viewer sees appointments directly assigned to users in their canViewUserIds list
-            if (appt.assignedTo === viewableUserId) {
-              viewableAppointmentsSet.add(appt.id);
-            }
-            
-            // Temporarily simplified: Original shared logic removed for debugging.
-            // // If viewer can see Mayor, and Vice shared with Mayor
-            // if (targetUser.role === USER_ROLES.MAYOR && appt.isShared && viceMayor && appt.assignedTo === viceMayor.id) {
-            //   viewableAppointmentsSet.add(appt.id);
-            // }
-            // // If viewer can see Vice, and Mayor shared with Vice
-            // if (targetUser.role === USER_ROLES.VICE_MAYOR && appt.isShared && mayor && appt.assignedTo === mayor.id) {
-            //   viewableAppointmentsSet.add(appt.id);
-            // }
-          });
-        });
-        filteredAppointments = appointments.filter(appt => viewableAppointmentsSet.has(appt.id));
-
+         // Simplified: Viewer sees appointments directly assigned to users in their canViewUserIds list
+        filteredAppointments = appointments.filter(appt => canViewUserIds.includes(appt.assignedTo));
       } else {
         return []; // Viewer with no assigned calendars sees nothing
       }
@@ -96,7 +73,7 @@ export const AppointmentProvider: React.FC<{ children: React.ReactNode }> = ({ c
 
     const start = viewType === 'day' ? viewDate : startOfWeek(viewDate, { weekStartsOn: 1 });
     const end = viewType === 'day' ? viewDate : endOfWeek(viewDate, { weekStartsOn: 1 });
-    
+
     let dateFilteredAppointments: Appointment[];
     if (viewType === 'day') {
       dateFilteredAppointments = filteredAppointments.filter(appt => isSameDay(parseISO(appt.date), start));
@@ -105,7 +82,7 @@ export const AppointmentProvider: React.FC<{ children: React.ReactNode }> = ({ c
     } else { // month view
      dateFilteredAppointments = filteredAppointments.filter(appt => parseISO(appt.date).getMonth() === viewDate.getMonth() && parseISO(appt.date).getFullYear() === viewDate.getFullYear());
     }
-    
+
     return dateFilteredAppointments.sort((a,b) => parseISO(a.date).getTime() - parseISO(b.date).getTime() || a.time.localeCompare(b.time));
 
   }, [appointments, allUsers]);
@@ -130,18 +107,18 @@ export const AppointmentProvider: React.FC<{ children: React.ReactNode }> = ({ c
 
   const getWeeklyAppointmentCount = useCallback((currentUser: User | null, targetDate: Date = new Date()): number => {
     if (!currentUser) return 0;
-    
+
     let userAppointments = getAppointmentsForUser(currentUser.id, currentUser.role, currentUser.canViewCalendarsOf || [], targetDate, 'week');
-    
+
     return userAppointments.length; // getAppointmentsForUser already filters by week if viewType is 'week'
-  }, [getAppointmentsForUser]); 
+  }, [getAppointmentsForUser]);
 
   const getUpcomingAppointments = useCallback((currentUser: User | null, limit: number = 5): Appointment[] => {
     if (!currentUser) return [];
     const today = new Date();
-    
+
     const allRelevantAppointments = getAppointmentsForUser(currentUser.id, currentUser.role, currentUser.canViewCalendarsOf || [], today, 'month');
-    
+
     return allRelevantAppointments
       .filter(appt => isAfter(parseISO(appt.date), subDays(today,1))) // Only future or today's appointments
       .sort((a, b) => parseISO(a.date).getTime() - parseISO(b.date).getTime() || a.time.localeCompare(b.time))
